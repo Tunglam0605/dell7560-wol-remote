@@ -1,182 +1,110 @@
 <!doctype html>
-<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0b1424"><title>Dell Precision 7560 — Remote Wake</title>
-<style>
-:root{color-scheme:dark;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
-*{box-sizing:border-box}body{margin:0;min-height:100svh;display:grid;place-items:center;padding:20px;background:#0b1424;color:#edf4ff}
-main{width:min(440px,100%);padding:26px;border-radius:18px;background:#17253d;border:1px solid #344866;box-shadow:0 20px 70px #0007}
-h1{font-size:1.5rem;margin:0 0 8px}p,small{color:#bdcbdd;line-height:1.5}
-.state{border-radius:10px;padding:12px;background:#0e1a2e;margin:18px 0;display:flex;align-items:center;gap:10px}
-.dot{width:10px;height:10px;border-radius:50%;background:#85909e;flex-shrink:0}.dot.up{background:#53d48e}.dot.wait{background:#ffc66c}
-input,button{width:100%;padding:14px;border-radius:10px;font-size:1rem}
-input{color:white;background:#0b1729;border:1px solid #536881}
-label{display:block;margin:14px 0 6px;color:#d5e1f0;font-size:.9rem}
-button{border:0;cursor:pointer;background:#317eeb;color:white;font-weight:700;margin-top:14px}
-button.secondary{background:#294668}button.danger{background:#c24258}button#cancel{background:#5a6e87}button:disabled{opacity:.45;cursor:wait}
-#message{min-height:48px;white-space:pre-wrap}details{margin-top:24px;border-top:1px solid #374760;padding-top:18px}
-summary{cursor:pointer;color:#c7dcf7}.note{font-size:.78rem;color:#a8b5c7}
-.check{display:flex;align-items:center;gap:8px;margin-top:15px}.check input{width:auto;margin:0}.check label{margin:0;font-size:.8rem}
-</style></head>
-<body><main><h1>⏻ Dell Precision 7560</h1>
-<p>Đánh thức Dell qua Internet từ Wi-Fi bất kỳ hoặc 4G/5G bằng MQTT qua TLS.</p>
-<div class="state"><span id="dot" class="dot"></span><span id="state">Chưa kết nối</span></div>
-<button type="button" id="wake" disabled>⏻ Bật Dell (Wake-on-LAN)</button>
-<div class="state"><span id="pcdot" class="dot"></span><span id="pcstate">Dịch vụ tắt máy: chưa kết nối</span></div>
-<button type="button" class="danger" id="shutdown" disabled>⏼ Tắt Dell từ xa</button>
-<button type="button" id="cancel" hidden disabled>↩ Hủy lệnh tắt máy (45 giây)</button>
-<p id="message" aria-live="polite">Thiết lập kết nối EMQX lần đầu để bắt đầu.</p>
-<button type="button" id="reconnect" class="secondary">Kết nối lại</button>
-<details id="settings"><summary>Cấu hình Cloud — thiết lập một lần</summary>
-<label for="host">Hostname EMQX Cloud</label><input id="host" placeholder="xxxx.emqxsl.com" autocomplete="off" spellcheck="false">
-<label for="user">Username MQTT cho điện thoại</label><input id="user" placeholder="dell-phone" autocomplete="off" spellcheck="false">
-<label for="pass">Password MQTT cho điện thoại</label><input id="pass" type="password" autocomplete="off">
-<label for="topic">Chủ đề MQTT (prefix)</label><input id="topic" value="home/dell7560" autocomplete="off" spellcheck="false">
-<div class="check"><input id="remember" type="checkbox"><label for="remember">Ghi nhớ mật khẩu trên thiết bị cá nhân này</label></div>
-<p class="note">Nếu không chọn ghi nhớ, mật khẩu chỉ lưu trong phiên tab. Ghi nhớ lưu mật khẩu trong bộ nhớ trình duyệt, vì vậy chỉ dùng khi điện thoại đã khóa màn hình.</p>
-<button type="button" id="connect">Lưu và kết nối</button></details>
-<p class="note">Wake cần ESP32 online. Tắt máy cần dịch vụ Windows đang online. Sau khi bấm Tắt, có 45 giây để Hủy. Lệnh Windows Shutdown không ép đóng ứng dụng chưa lưu; chương trình chưa lưu có thể cản quá trình tắt. Không mở cổng 80 của ESP32 ra Internet.</p>
-</main>
+<html lang="vi" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0d1525">
+  <meta name="description" content="Tùng Lâm Automation · Dell Precision 7560 remote power control">
+  <title>Dell Remote Power | Tùng Lâm Automation</title>
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo.png">
+  <link rel="stylesheet" href="./ui.css?v=2">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" aria-label="Điều hướng">
+    <div class="brand-lockup">
+      <img class="brand-logo" src="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo-background.png" alt="Tùng Lâm Automation">
+      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v2.0</span></div>
+    </div>
+    <div class="nav-label">HỆ THỐNG</div>
+    <nav class="nav-links" aria-label="Các khu vực">
+      <a class="nav-item active" href="#dashboard"><span class="nav-icon">▦</span> Tổng quan</a>
+      <a class="nav-item" href="#power"><span class="nav-icon">⏻</span> Điều khiển nguồn</a>
+      <a class="nav-item" href="#schedule"><span class="nav-icon">◷</span> Lịch tắt máy</a>
+      <a class="nav-item" href="#events"><span class="nav-icon">▤</span> Nhật ký</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="status-mini"><span id="sideDot" class="led"></span><div><small>EMQX CLOUD</small><b id="sidebarCloud">Chưa kết nối</b></div></div>
+      <div class="foot-actions">
+        <button class="theme-btn" id="themeToggle" type="button" aria-label="Chuyển giao diện sáng/tối" title="Chuyển giao diện sáng/tối">◐ <span>Giao diện</span></button>
+        <button class="theme-btn" id="configOpen" type="button" aria-label="Mở cấu hình MQTT">⚙ <span>Cấu hình</span></button>
+      </div>
+      <small class="copyright">© 2026 TÙNG LÂM AUTOMATION</small>
+    </div>
+  </aside>
+
+  <main class="content" id="dashboard">
+    <header class="topbar">
+      <div class="breadcrumb"><span>TUNGLAM AUTOMATION</span><span class="slash">/</span><b>REMOTE CONTROL</b></div>
+      <div class="topbar-actions">
+        <span class="pill" id="cloudPill"><i class="led"></i><span id="cloudTop">Cloud chưa kết nối</span></span>
+        <button class="icon-button" id="reconnect" type="button" title="Kết nối lại MQTT" aria-label="Kết nối lại MQTT">⟳</button>
+        <button class="icon-button mobile-theme" id="themeMobile" type="button" title="Đổi giao diện">◐</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div>
+        <div class="eyebrow">◈ SECURE REMOTE POWER MANAGEMENT</div>
+        <h1>Điều khiển <span class="gradient-text">Dell Precision 7560</span></h1>
+        <p>Bật máy qua Wake-on-LAN, tắt từ xa và thiết lập lịch tắt an toàn — mọi nơi qua MQTT/TLS.</p>
+      </div>
+      <div class="hero-device" aria-hidden="true"><div class="hero-ring"><span>⏻</span></div><small>PRECISION / 7560</small></div>
+    </section>
+
+    <section class="metrics" aria-label="Trạng thái hệ thống">
+      <article class="stat-card"><div class="metric-top"><span>MQTT CLOUD</span><span class="metric-icon cyan">☁</span></div><strong id="cloudState">OFFLINE</strong><div class="metric-sub"><i id="cloudDot" class="led"></i><span>Kết nối WebSocket TLS</span></div></article>
+      <article class="stat-card"><div class="metric-top"><span>ESP32 GATEWAY</span><span class="metric-icon mint">▣</span></div><strong id="espState">CHƯA RÕ</strong><div class="metric-sub"><i id="espDot" class="led"></i><span>Magic Packet / WOL</span></div></article>
+      <article class="stat-card"><div class="metric-top"><span>WINDOWS AGENT</span><span class="metric-icon blue">▤</span></div><strong id="pcState">CHƯA RÕ</strong><div class="metric-sub"><i id="pcDot" class="led"></i><span>Nhận lệnh &amp; hẹn giờ</span></div></article>
+      <article class="stat-card"><div class="metric-top"><span>LỊCH TẮT MÁY</span><span class="metric-icon amber">◷</span></div><strong id="timerState">CHƯA ĐẶT</strong><div class="metric-sub"><i id="timerDot" class="led"></i><span id="timerSummary">Không có lịch đang chạy</span></div></article>
+    </section>
+
+    <div class="main-grid">
+      <section id="power" class="panel power-panel">
+        <div class="panel-heading"><div><div class="eyebrow">POWER MANAGEMENT</div><h2>Điều khiển nguồn</h2><p>Lệnh được gửi qua EMQX và xác nhận bởi thiết bị đích.</p></div><span class="section-icon">⚡</span></div>
+        <div class="power-actions">
+          <div class="action-tile action-start"><div class="tile-badge mint">WOL · ESP32</div><div class="tile-icon">⏻</div><h3>Bật Dell từ xa</h3><p>Dành cho trạng thái Shutdown S5. ESP32 phát Magic Packet qua LAN.</p><button id="wake" class="btn btn-primary" type="button" disabled>⏻ &nbsp; Đánh thức Dell <span>→</span></button></div>
+          <div class="action-tile action-stop"><div class="tile-badge coral">WINDOWS · POWER</div><div class="tile-icon">⏼</div><h3>Tắt Dell an toàn</h3><p>Xác nhận trước khi thực hiện. Có 45 giây để hủy lệnh.</p><button id="shutdown" class="btn btn-danger" type="button" disabled>⏼ &nbsp; Tắt máy từ xa <span>→</span></button></div>
+        </div>
+        <div class="cancel-strip" id="cancelStrip" hidden><span><i class="led warn"></i><b>Đang chờ tắt máy</b> — có thể hủy trước khi hết hạn</span><button type="button" class="btn btn-outline btn-sm" id="cancel" disabled>Hủy lệnh tắt ↩</button></div>
+      </section>
+
+      <section id="schedule" class="panel schedule-panel">
+        <div class="panel-heading"><div><div class="eyebrow">AUTOMATION / TIMER</div><h2>Hẹn giờ tắt máy</h2><p>Lịch chạy tại Windows, không phụ thuộc điện thoại.</p></div><span class="section-icon">◷</span></div>
+        <div class="timer-display"><small id="timerDisplayLabel">TRẠNG THÁI LỊCH TẮT</small><strong id="countdown">-- : -- : --</strong><span id="scheduleWhen">Chưa có lịch tắt máy</span></div>
+        <div class="field-group"><label for="delayPreset">Tắt sau khoảng thời gian</label><div class="preset-grid">
+          <button type="button" class="preset active" data-minutes="15">15 <small>phút</small></button>
+          <button type="button" class="preset" data-minutes="30">30 <small>phút</small></button>
+          <button type="button" class="preset" data-minutes="60">1 <small>giờ</small></button>
+          <button type="button" class="preset" data-minutes="120">2 <small>giờ</small></button>
+        </div></div>
+        <div class="field-group"><label for="timeMode">Kiểu đặt lịch</label><select id="timeMode"><option value="delay">Sau khoảng thời gian đã chọn</option><option value="datetime">Tại ngày và giờ cụ thể</option></select></div>
+        <div class="field-group" id="dateGroup" hidden><label for="shutdownAt">Ngày / giờ tắt (theo múi giờ điện thoại)</label><input id="shutdownAt" type="datetime-local" step="60"/></div>
+        <button type="button" class="btn btn-schedule" id="scheduleBtn" disabled>◷ &nbsp; Xác nhận hẹn giờ <span>→</span></button>
+        <button type="button" class="btn btn-ghost" id="cancelSchedule" hidden disabled>✕ &nbsp; Hủy lịch đang chạy</button>
+        <p class="hint">Phạm vi: từ 2 phút đến 24 giờ. Không tắt cưỡng bức ứng dụng chưa lưu. Nếu Dell không còn mở, không thể lên lịch mới.</p>
+      </section>
+    </div>
+
+    <section class="panel events-panel" id="events"><div class="panel-heading"><div><div class="eyebrow">EVENT TELEMETRY</div><h2>Nhật ký điều khiển</h2></div><button type="button" class="btn btn-outline btn-sm" id="clearLog">Xóa nhật ký</button></div>
+      <div id="log" class="log-console" role="log" aria-live="polite"><div class="log-entry"><time>--:--:--</time><span class="log-info">[SYSTEM]</span>Đang chờ kết nối EMQX Cloud...</div></div>
+      <div id="message" class="sr-status" aria-live="polite"></div>
+    </section>
+    <footer class="footer"><span><i class="led ok"></i> TUNG LAM AUTOMATION · ENGINEERED FOR RELIABILITY</span><span>MQTT/TLS 8883 &nbsp; / &nbsp; WSS 8084 &nbsp; / &nbsp; ESP32 WOL</span></footer>
+  </main>
+</div>
+
+<dialog class="gw-modal" id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog" class="modal-body"><div class="modal-eyebrow">TUNGLAM · SECURITY CONFIRMATION</div><h2 id="confirmTitle">Xác nhận thao tác</h2><p id="confirmText"></p><div class="modal-actions"><button class="btn btn-outline" id="confirmNo" value="cancel">Hủy bỏ</button><button class="btn btn-danger" id="confirmYes" value="confirm">Xác nhận thực hiện</button></div></form></dialog>
+
+<dialog class="gw-modal settings-modal" id="settings" aria-labelledby="settingsTitle"><div class="modal-body"><div class="modal-eyebrow">CLOUD / CONNECTION PROFILE</div><h2 id="settingsTitle">Cấu hình EMQX Cloud</h2><p class="modal-intro">Chỉ cần thiết lập một lần bằng tài khoản MQTT <b>Dell-Phone</b>. Không nhập mật khẩu quản trị EMQX.</p>
+  <label for="host">Broker hostname</label><input id="host" placeholder="j1199ec9.ala.asia-southeast1.emqxsl.com" spellcheck="false" autocomplete="off">
+  <label for="user">MQTT username</label><input id="user" placeholder="Dell-Phone" autocomplete="off" spellcheck="false">
+  <label for="pass">MQTT password</label><input id="pass" type="password" placeholder="Mật khẩu MQTT Dell-Phone" autocomplete="off">
+  <label for="topic">Topic prefix</label><input id="topic" value="home/dell7560" autocomplete="off" spellcheck="false">
+  <label class="checkrow"><input id="remember" type="checkbox"> <span>Ghi nhớ mật khẩu trên điện thoại này</span></label>
+  <p class="fineprint">Khi bật ghi nhớ, trình duyệt lưu mật khẩu dưới dạng văn bản trong bộ nhớ của chính thiết bị. Không bật trên máy dùng chung.</p>
+  <div class="modal-actions"><button class="btn btn-outline" type="button" id="configClose">Đóng</button><button class="btn btn-primary" type="button" id="connect">Lưu &amp; kết nối</button></div>
+</div></dialog>
 <script src="./mqtt.min.js"></script>
-<script>
-'use strict';
-const el=id=>document.getElementById(id);
-const STORAGE='dell7560-cloud-config-v1', TAB_SECRET='dell7560-mqtt-session';
-let client=null, online=false, connected=false, agentOnline=false;
-let pending=null, pendingAction=null, scheduled=false, prefix='';
-const AGENT_STATUS_ID='FFFFFFFFFFFFFFFF';
-const setMessage=t=>{el('message').textContent=t};
-const setState=(t,c='')=>{el('state').textContent=t;el('dot').className='dot '+c};
-const update=()=>{
- el('wake').disabled=!(online&&connected)||pending!==null;
- el('shutdown').disabled=!(agentOnline&&connected)||pending!==null;
- el('cancel').hidden=!scheduled;
- el('cancel').disabled=!(agentOnline&&connected)||pending!==null;
-};
-const setAgentState=(isOnline)=>{
- agentOnline=Boolean(isOnline);
- el('pcstate').textContent=agentOnline?'Windows: dịch vụ nhận lệnh đang online':'Windows: dịch vụ tắt máy offline';
- el('pcdot').className='dot '+(agentOnline?'up':'');
- update();
-};
-function randomHex(bytes=8){const b=new Uint8Array(bytes);crypto.getRandomValues(b);return [...b].map(v=>v.toString(16).padStart(2,'0')).join('').toUpperCase()}
-function readConfig(){
- const host=el('host').value.trim().replace(/^wss:\/\//i,'').replace(/:(8084)(\/mqtt)?\/?$/,'').replace(/\/mqtt\/?$/,'');
- const user=el('user').value.trim(),password=el('pass').value,topic=el('topic').value.trim().replace(/\/$/,'');
- if(!/^[a-z0-9][a-z0-9.-]{2,250}$/i.test(host)||host.includes('..'))throw Error('Hostname EMQX không hợp lệ');
- if(!user||!password)throw Error('Vui lòng nhập tài khoản MQTT của điện thoại');
- if(!/^[a-zA-Z0-9_/-]{3,100}$/.test(topic))throw Error('Topic không hợp lệ');
- return {host,user,password,topic}
-}
-function save(c){
- localStorage.setItem(STORAGE,JSON.stringify({...c,password:el('remember').checked?c.password:''}));
- if(el('remember').checked)sessionStorage.removeItem(TAB_SECRET);
- else sessionStorage.setItem(TAB_SECRET,c.password)
-}
-function load(){
- try{
- const c=JSON.parse(localStorage.getItem(STORAGE)||'{}');
- el('host').value=c.host||'';el('user').value=c.user||'';
- el('topic').value=c.topic||'home/dell7560';
- el('pass').value=c.password||sessionStorage.getItem(TAB_SECRET)||'';
- el('remember').checked=Boolean(c.password);
- return Boolean(c.host&&c.user&&el('pass').value)
- }catch{return false}
-}
-function connect(){
- let cfg;try{cfg=readConfig()}catch(e){setMessage(e.message);el('settings').open=true;return}
- if(typeof mqtt==='undefined'){setMessage('Không tải được thư viện MQTT.js; kiểm tra Internet.');return}
- save(cfg);if(client){try{client.end(true)}catch{}}
- online=false;connected=false;pending=null;pendingAction=null;scheduled=false;prefix=cfg.topic;setAgentState(false);update();
- setState('Đang kết nối MQTT/TLS...','wait');setMessage('Kết nối Cloud...');
- const c=mqtt.connect('wss://'+cfg.host+':8084/mqtt',{
-   clientId:'dellphone_'+randomHex(8).toLowerCase(),username:cfg.user,password:cfg.password,
-   clean:true,protocolVersion:4,keepalive:30,connectTimeout:12000,reconnectPeriod:3500,
-   queueQoSZero:false,resubscribe:false
- });client=c;
- c.on('connect',()=>{
-  if(client!==c)return;
-  connected=true;online=false;setAgentState(false);update();setState('Đã kết nối Cloud; chờ ESP32','wait');
-  c.subscribe([prefix+'/status',prefix+'/ack'],{qos:0},err=>{
-    if(err)setMessage('Không subscribe được: '+err.message);
-    else setMessage('Đã kết nối broker. Đang chờ trạng thái ESP32...');
-  })
- });
- c.on('message',(topic,data)=>{
-  if(client!==c)return;
-  const s=data.toString();
-  if(topic===prefix+'/status'){
-    online=s==='online';
-    setState(online?'ESP32 trực tuyến':'ESP32 ngoại tuyến',online?'up':'');
-    if(!pending)setMessage(online?'Đã sẵn sàng gửi lệnh đánh thức.':'ESP32 chưa trực tuyến. Kiểm tra nguồn và Wi-Fi.');
-    update()
-  }else if(topic===prefix+'/ack'){
-    try{
-      const ack=JSON.parse(s);
-      if(ack.id===AGENT_STATUS_ID){
-        setAgentState(ack.result==='power_agent_online');
-        return;
-      }
-      if(!pending||ack.id!==pending)return;
-      const action=pendingAction;
-      pending=null;pendingAction=null;
-      if(action==='WAKE'){
-        if(ack.result==='wol_sent')setMessage('✅ ESP32 đã phát Magic Packet. Hãy đợi Dell khởi động.');
-        else setMessage('⚠️ ESP32 phản hồi: '+ack.result);
-      }else if(action==='SHUTDOWN'){
-        if(ack.result==='shutdown_scheduled'){
-          scheduled=true;
-          setMessage('✅ Windows đã nhận lệnh. Dell sẽ tắt sau 45 giây. Anh có thể bấm Hủy trước khi hết thời gian.');
-        }else if(ack.result==='shutdown_already_scheduled'){
-          scheduled=true;setMessage('Lệnh tắt đã được lên lịch. Có thể bấm Hủy.');
-        }else{
-          setMessage('⚠️ Lệnh tắt máy: '+ack.result);
-        }
-      }else if(action==='CANCEL'){
-        if(ack.result==='shutdown_cancelled'){
-          scheduled=false;setMessage('✅ Đã hủy tắt máy trên Windows.');
-        }else{setMessage('⚠️ Hủy tắt máy: '+ack.result);}
-      }
-      update();
-    }catch{}
-  }
- });
- c.on('close',()=>{if(client!==c)return;connected=false;online=false;setAgentState(false);update();setState('Mất kết nối MQTT')});
- c.on('reconnect',()=>{if(client!==c)return;connected=false;online=false;setAgentState(false);update();setState('Đang kết nối lại...','wait')});
- c.on('error',err=>{if(client===c)setMessage('Lỗi MQTT/TLS: '+String(err.message).slice(0,160))});
- el('settings').open=false
-}
-function command(action){
- if(!client||!connected||pending)return;
- if(action==='WAKE'&&!online)return;
- if(action!=='WAKE'&&!agentOnline)return;
- const id=randomHex(),expires=Math.floor(Date.now()/1000)+30;
- if(expires<1600000000){setMessage('Đồng hồ điện thoại chưa chính xác');return}
- pending=id;pendingAction=action;update();
- setMessage(action==='SHUTDOWN'?'Đang gửi yêu cầu tắt máy đến Windows...':
-   action==='CANCEL'?'Đang gửi yêu cầu hủy tắt máy...':'Đang gửi yêu cầu đánh thức ESP32...');
- client.publish(prefix+'/cmd',action+'|'+expires+'|'+id,{qos:1,retain:false},err=>{
-   if(err&&pending===id){pending=null;pendingAction=null;update();setMessage('Lỗi gửi lệnh: '+err.message)}
-   else if(pending===id)setMessage('Đã gửi lệnh đến Cloud, đang chờ xác nhận từ thiết bị...')
- });
- setTimeout(()=>{
-   if(pending===id){
-      pending=null;pendingAction=null;update();
-      setMessage('Hết thời gian chờ xác nhận (12 giây). Kiểm tra trạng thái Cloud và dịch vụ Windows.');
-   }
- },12000)
-}
-function wake(){command('WAKE')}
-function shutdownDell(){
- if(!agentOnline||!connected||pending)return;
- if(window.confirm('Xác nhận TẮT Dell Precision 7560 từ xa?\n\nWindows bắt đầu tắt sau 45 giây; có thể bấm Hủy.\nNhớ lưu công việc đang mở.')){
-   command('SHUTDOWN');
- }
-}
-function cancelShutdown(){if(scheduled)command('CANCEL')}
-el('wake').addEventListener('click',wake);
-el('shutdown').addEventListener('click',shutdownDell);
-el('cancel').addEventListener('click',cancelShutdown);
-el('connect').addEventListener('click',connect);
-el('reconnect').addEventListener('click',connect);
-if(load())connect();else el('settings').open=true;
-</script></body></html>
+<script src="./app.js?v=2"></script>
+</body></html>
