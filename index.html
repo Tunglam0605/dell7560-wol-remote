@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1424"><title>Dell Precision 7560 — Remote Wake</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+*{box-sizing:border-box}body{margin:0;min-height:100svh;display:grid;place-items:center;padding:20px;background:#0b1424;color:#edf4ff}
+main{width:min(440px,100%);padding:26px;border-radius:18px;background:#17253d;border:1px solid #344866;box-shadow:0 20px 70px #0007}
+h1{font-size:1.5rem;margin:0 0 8px}p,small{color:#bdcbdd;line-height:1.5}
+.state{border-radius:10px;padding:12px;background:#0e1a2e;margin:18px 0;display:flex;align-items:center;gap:10px}
+.dot{width:10px;height:10px;border-radius:50%;background:#85909e;flex-shrink:0}.dot.up{background:#53d48e}.dot.wait{background:#ffc66c}
+input,button{width:100%;padding:14px;border-radius:10px;font-size:1rem}
+input{color:white;background:#0b1729;border:1px solid #536881}
+label{display:block;margin:14px 0 6px;color:#d5e1f0;font-size:.9rem}
+button{border:0;cursor:pointer;background:#317eeb;color:white;font-weight:700;margin-top:14px}
+button.secondary{background:#294668}button:disabled{opacity:.45;cursor:wait}
+#message{min-height:48px;white-space:pre-wrap}details{margin-top:24px;border-top:1px solid #374760;padding-top:18px}
+summary{cursor:pointer;color:#c7dcf7}.note{font-size:.78rem;color:#a8b5c7}
+.check{display:flex;align-items:center;gap:8px;margin-top:15px}.check input{width:auto;margin:0}.check label{margin:0;font-size:.8rem}
+</style></head>
+<body><main><h1>⏻ Dell Precision 7560</h1>
+<p>Đánh thức Dell qua Internet từ Wi-Fi bất kỳ hoặc 4G/5G bằng MQTT qua TLS.</p>
+<div class="state"><span id="dot" class="dot"></span><span id="state">Chưa kết nối</span></div>
+<button type="button" id="wake" disabled>⏻ Đánh thức Dell</button>
+<p id="message" aria-live="polite">Thiết lập kết nối EMQX lần đầu để bắt đầu.</p>
+<button type="button" id="reconnect" class="secondary">Kết nối lại</button>
+<details id="settings"><summary>Cấu hình Cloud — thiết lập một lần</summary>
+<label for="host">Hostname EMQX Cloud</label><input id="host" placeholder="xxxx.emqxsl.com" autocomplete="off" spellcheck="false">
+<label for="user">Username MQTT cho điện thoại</label><input id="user" placeholder="dell-phone" autocomplete="off" spellcheck="false">
+<label for="pass">Password MQTT cho điện thoại</label><input id="pass" type="password" autocomplete="off">
+<label for="topic">Chủ đề MQTT (prefix)</label><input id="topic" value="home/dell7560" autocomplete="off" spellcheck="false">
+<div class="check"><input id="remember" type="checkbox"><label for="remember">Ghi nhớ mật khẩu trên thiết bị cá nhân này</label></div>
+<p class="note">Nếu không chọn ghi nhớ, mật khẩu chỉ lưu trong phiên tab. Ghi nhớ lưu mật khẩu trong bộ nhớ trình duyệt, vì vậy chỉ dùng khi điện thoại đã khóa màn hình.</p>
+<button type="button" id="connect">Lưu và kết nối</button></details>
+<p class="note">Đèn trạng thái phản ánh ESP32, không phản ánh trực tiếp nguồn Dell. Lệnh chỉ có hiệu lực khi ESP32 còn nguồn 5V, Wi-Fi và kết nối broker. Không mở cổng 80 trên router.</p>
+</main>
+<script src="./mqtt.min.js"></script>
+<script>
+'use strict';
+const el=id=>document.getElementById(id);
+const STORAGE='dell7560-cloud-config-v1', TAB_SECRET='dell7560-mqtt-session';
+let client=null, online=false, connected=false, pending=null, prefix='';
+const setMessage=t=>{el('message').textContent=t};
+const setState=(t,c='')=>{el('state').textContent=t;el('dot').className='dot '+c};
+const update=()=>{el('wake').disabled=!(online&&connected)||pending!==null};
+function randomHex(bytes=8){const b=new Uint8Array(bytes);crypto.getRandomValues(b);return [...b].map(v=>v.toString(16).padStart(2,'0')).join('').toUpperCase()}
+function readConfig(){
+ const host=el('host').value.trim().replace(/^wss:\/\//i,'').replace(/:(8084)(\/mqtt)?\/?$/,'').replace(/\/mqtt\/?$/,'');
+ const user=el('user').value.trim(),password=el('pass').value,topic=el('topic').value.trim().replace(/\/$/,'');
+ if(!/^[a-z0-9][a-z0-9.-]{2,250}$/i.test(host)||host.includes('..'))throw Error('Hostname EMQX không hợp lệ');
+ if(!user||!password)throw Error('Vui lòng nhập tài khoản MQTT của điện thoại');
+ if(!/^[a-zA-Z0-9_/-]{3,100}$/.test(topic))throw Error('Topic không hợp lệ');
+ return {host,user,password,topic}
+}
+function save(c){
+ localStorage.setItem(STORAGE,JSON.stringify({...c,password:el('remember').checked?c.password:''}));
+ if(el('remember').checked)sessionStorage.removeItem(TAB_SECRET);
+ else sessionStorage.setItem(TAB_SECRET,c.password)
+}
+function load(){
+ try{
+ const c=JSON.parse(localStorage.getItem(STORAGE)||'{}');
+ el('host').value=c.host||'';el('user').value=c.user||'';
+ el('topic').value=c.topic||'home/dell7560';
+ el('pass').value=c.password||sessionStorage.getItem(TAB_SECRET)||'';
+ el('remember').checked=Boolean(c.password);
+ return Boolean(c.host&&c.user&&el('pass').value)
+ }catch{return false}
+}
+function connect(){
+ let cfg;try{cfg=readConfig()}catch(e){setMessage(e.message);el('settings').open=true;return}
+ if(typeof mqtt==='undefined'){setMessage('Không tải được thư viện MQTT.js; kiểm tra Internet.');return}
+ save(cfg);if(client){try{client.end(true)}catch{}}
+ online=false;connected=false;pending=null;prefix=cfg.topic;update();
+ setState('Đang kết nối MQTT/TLS...','wait');setMessage('Kết nối Cloud...');
+ const c=mqtt.connect('wss://'+cfg.host+':8084/mqtt',{
+   clientId:'dellphone_'+randomHex(8).toLowerCase(),username:cfg.user,password:cfg.password,
+   clean:true,protocolVersion:4,keepalive:30,connectTimeout:12000,reconnectPeriod:3500,
+   queueQoSZero:false,resubscribe:false
+ });client=c;
+ c.on('connect',()=>{
+  if(client!==c)return;
+  connected=true;online=false;update();setState('Đã kết nối Cloud; chờ ESP32','wait');
+  c.subscribe([prefix+'/status',prefix+'/ack'],{qos:0},err=>{
+    if(err)setMessage('Không subscribe được: '+err.message);
+    else setMessage('Đã kết nối broker. Đang chờ trạng thái ESP32...');
+  })
+ });
+ c.on('message',(topic,data)=>{
+  if(client!==c)return;
+  const s=data.toString();
+  if(topic===prefix+'/status'){
+    online=s==='online';
+    setState(online?'ESP32 trực tuyến':'ESP32 ngoại tuyến',online?'up':'');
+    if(!pending)setMessage(online?'Đã sẵn sàng gửi lệnh đánh thức.':'ESP32 chưa trực tuyến. Kiểm tra nguồn và Wi-Fi.');
+    update()
+  }else if(topic===prefix+'/ack'&&pending){
+    try{
+      const ack=JSON.parse(s);
+      if(ack.id!==pending)return;
+      pending=null;update();
+      if(ack.result==='wol_sent')setMessage('✅ ESP32 đã phát Magic Packet. Chờ Dell khởi động và kiểm tra DeskIn hoặc Remote Workstation.');
+      else setMessage('⚠️ ESP32 phản hồi: '+ack.result)
+    }catch{}
+  }
+ });
+ c.on('close',()=>{if(client!==c)return;connected=false;online=false;update();setState('Mất kết nối MQTT')});
+ c.on('reconnect',()=>{if(client!==c)return;connected=false;online=false;update();setState('Đang kết nối lại...','wait')});
+ c.on('error',err=>{if(client===c)setMessage('Lỗi MQTT/TLS: '+String(err.message).slice(0,160))});
+ el('settings').open=false
+}
+function wake(){
+ if(!client||!connected||!online||pending)return;
+ const id=randomHex(),expires=Math.floor(Date.now()/1000)+30;
+ if(expires<1600000000){setMessage('Đồng hồ điện thoại chưa chính xác');return}
+ pending=id;update();setMessage('Đang gửi yêu cầu đến ESP32...');
+ client.publish(prefix+'/cmd','WAKE|'+expires+'|'+id,{qos:0,retain:false},err=>{
+  if(err&&pending===id){pending=null;update();setMessage('Lỗi gửi: '+err.message)}
+  else if(pending===id)setMessage('Đã gửi tới broker, chờ ESP32 xác nhận...')
+ });
+ setTimeout(()=>{if(pending===id){pending=null;update();setMessage('Hết thời gian chờ phản hồi ESP32 (12 giây). Kiểm tra kết nối Cloud.')}},12000)
+}
+el('wake').addEventListener('click',wake);
+el('connect').addEventListener('click',connect);
+el('reconnect').addEventListener('click',connect);
+if(load())connect();else el('settings').open=true;
+</script></body></html>
