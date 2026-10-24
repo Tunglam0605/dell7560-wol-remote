@@ -7,14 +7,14 @@
   <meta name="description" content="Tùng Lâm Automation · Dell Precision 7560 remote power control">
   <title>Dell Remote Power | Tùng Lâm Automation</title>
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo.png">
-  <link rel="stylesheet" href="./ui.css?v=11">
+  <link rel="stylesheet" href="./ui.css?v=12">
 </head>
 <body>
 <div class="app-shell">
   <aside class="sidebar" aria-label="Điều hướng">
     <div class="brand-lockup">
       <img class="brand-logo" src="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo-background.png" alt="Tùng Lâm Automation">
-      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v4.3</span></div>
+      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v4.4</span></div>
     </div>
     <div class="nav-label">HỆ THỐNG</div>
     <nav class="nav-links" aria-label="Các khu vực">
@@ -86,6 +86,15 @@
         <span>Dao động nhỏ <strong id="roomMicro">--</strong></span>
         <span>Tần suất mẫu <strong id="roomRate">--</strong></span>
       </div>
+      <div class="room-periodic" id="roomPeriodPanel" aria-live="polite">
+        <div class="room-periodic-head"><span>PHÂN TÍCH DAO ĐỘNG TUẦN HOÀN RF (60–120 GIÂY)</span><span class="periodic-signal" id="roomPeriodState">ĐANG CHỜ TÍN HIỆU</span></div>
+        <div class="room-periodic-stats">
+          <div><small>Độ khớp mô hình</small><strong id="roomPeriodQuality">--</strong></div>
+          <div><small>Tần số dao động RF</small><strong id="roomPeriodCpm">--</strong></div>
+          <div><small>Cửa sổ đo</small><strong id="roomPeriodWindow">--</strong></div>
+        </div>
+        <p id="roomPeriodNote">Độ khớp phổ RF không phải xác suất có người và tần số RF không phải nhịp thở.</p>
+      </div>
       <div class="room-foot"><span id="roomTimestamp">Chưa nhận bản tin</span><span>Không suy ra nhịp thở hay kết luận chắc chắn có người</span></div>
     </div>
   </div>
@@ -155,5 +164,5 @@
 </div></dialog>
 <script src="./mqtt.min.js"></script>
 <script src="./icons.js?v=4"></script>
-<script src="./app.js?v=11"></script>
+<script src="./app.js?v=12"></script>
 </body></html>
