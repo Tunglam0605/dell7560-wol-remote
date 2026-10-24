@@ -48,3 +48,12 @@ The existing ESP32 WROOM-32 can collect Wi-Fi Channel State Information (CSI) fr
 - A local-only diagnostic endpoint `GET /api/csi` on the ESP32 provides aggregate CSI status; it does not expose raw CSI data, router identifiers or MAC addresses.
 - The integrated firmware was deployed by supervised LAN OTA on 2026-10-24; Wi-Fi/MQTT resumed, local CSI metrics were observed, and the LAN Wake endpoint still acknowledged a request.
 - **Important:** This is a movement *candidate* indicator. `QUIET_SIGNAL` does not prove an empty room. There are no validated occupancy accuracy claims. True sitting-still/breathing presence detection may require an mmWave sensor or more extensive CSI calibration.
+
+## Subcarrier micro-variation trial (v4.3)
+
+- Uses **only one ESP32-WROOM-32 plus the existing Wi-Fi router**. The local device measures normalized amplitudes of 20 CSI subcarrier groups and computes signal drift and within-window dispersion.
+- Frequency: experimental router Ping around 10 Hz. CSI measurements remain local; only diagnostic summary data is transmitted over MQTT/TLS.
+- Supports \`MICRO_VARIATION\` in addition to \`CALIBRATING\`, \`QUIET_SIGNAL\`, and \`MOVEMENT_CANDIDATE\`. New dashboard metrics are "Dao động nhỏ" and "Tần suất mẫu".
+- A live supervised OTA ran successfully. 24 unlabeled CSI observations averaged **11.02 Hz**, no queue drops, and all reported \`QUIET_SIGNAL\`.
+- **No sleeping-person identification was proven.** A CSI variation could be caused by multipath/noise; a stable CSI reading does **not** imply that nobody is in the room. No heart/breath signal is reported or inferred.
+- Firmware and full raw logs remain on the owner’s private Dell workspace; no Wi-Fi/MQTT secrets or firmware images are placed in this public repository.
