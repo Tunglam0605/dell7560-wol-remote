@@ -91,11 +91,23 @@ function applyPresence(packet){
  log('info',agentOnline?'Windows agent đã kết nối'+(timerSupported?' · hỗ trợ hẹn giờ':' · bản cũ, chưa hỗ trợ lịch mới'):'Windows agent đang offline');
 }
 function randomHex(bytes=8){const b=new Uint8Array(bytes);crypto.getRandomValues(b);return Array.from(b,v=>v.toString(16).padStart(2,'0')).join('').toUpperCase();}
+function setAdvanced(visible){
+ const section=$('advancedSettings');
+ section.hidden=!visible;
+ $('advancedToggle').setAttribute('aria-expanded',visible?'true':'false');
+ $('advancedToggleLabel').textContent=visible?'Ẩn cấu hình nâng cao':'Settings · Cấu hình nâng cao';
+}
+function openSettings(advanced=false){
+ setAdvanced(advanced);
+ const dialog=$('settings');
+ if(!dialog.open)dialog.showModal();
+}
 function getInput(){
  const host=$('host').value.trim().replace(/^wss:\/\//i,'').replace(/:8084(\/mqtt)?\/?$/i,'').replace(/\/mqtt\/?$/i,'');
  const user=$('user').value.trim(),password=$('pass').value,topic=$('topic').value.trim().replace(/\/$/,'');
  if(!/^[A-Za-z0-9][A-Za-z0-9.-]{2,250}$/.test(host)||host.includes('..'))throw Error('Broker hostname không hợp lệ');
- if(!user||!password)throw Error('Thiếu username hoặc password MQTT');
+ if(!password)throw Error('Vui lòng nhập mật khẩu MQTT');
+ if(!user)throw Error('Thiếu MQTT username trong Settings');
  if(!/^[A-Za-z0-9_/-]{3,100}$/.test(topic))throw Error('Topic prefix không hợp lệ');
  return {host,user,password,topic};
 }
@@ -111,11 +123,11 @@ function loadConfig(){
   $('topic').value=saved.topic||'home/dell7560';
   $('pass').value=saved.password||sessionStorage.getItem(TEMP_SECRET)||'';
   $('remember').checked=!!saved.password;
-  return !!(saved.host&&saved.user&&$('pass').value);
+  return !!$('pass').value;
  }catch{return false}
 }
 function connect(){
- let cfg;try{cfg=getInput()}catch(e){log('error',e.message);$('settings').showModal();return}
+ let cfg;try{cfg=getInput()}catch(e){log('error',e.message);openSettings(!e.message.includes('mật khẩu'));return}
  if(typeof mqtt==='undefined'){log('error','Thiếu thư viện MQTT.js');return}
  saveConfig(cfg);if(mqttClient){try{mqttClient.end(true)}catch{}}
  connected=false;espOnline=false;agentOnline=false;timerSupported=false;
@@ -210,10 +222,13 @@ function themeToggle(){themeApply(document.documentElement.dataset.theme==='ligh
 function init(){
   const theme=localStorage.getItem(THEME);themeApply(theme==='light'?'light':'dark');
   $('themeToggle').addEventListener('click',themeToggle);$('themeMobile').addEventListener('click',themeToggle);
-  $('configOpen').addEventListener('click',()=>$('settings').showModal());
+  $('configOpen').addEventListener('click',()=>openSettings(true));
+  $('settingsShortcut').addEventListener('click',()=>openSettings(true));
+  $('advancedToggle').addEventListener('click',()=>setAdvanced($('advancedSettings').hidden));
+  $('pass').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();connect()} });
   $('configClose').addEventListener('click',()=>$('settings').close());
   $('connect').addEventListener('click',connect);
-  $('reconnect').addEventListener('click',()=>{if($('pass').value)connect();else $('settings').showModal()});
+  $('reconnect').addEventListener('click',()=>{if($('pass').value)connect();else openSettings(false)});
   $('wake').addEventListener('click',()=>command('WAKE'));
   $('shutdown').addEventListener('click',shutdownNow);
   $('scheduleBtn').addEventListener('click',schedulePower);
@@ -229,7 +244,7 @@ function init(){
   $('shutdownAt').addEventListener('change',()=>{});
   setInterval(renderCountdown,1000);
   renderCountdown();updateState();
-  if(loadConfig())connect();else $('settings').showModal();
+  if(loadConfig())connect();else openSettings(false);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
