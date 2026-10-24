@@ -104,12 +104,14 @@ function applyRoomSignal(packet){
  const ts=Number(packet.ts),seq=Number(packet.seq),samples=Number(packet.samples);
  if(!Number.isInteger(ts)||ts<1600000000||ts>Date.now()/1000+15||Date.now()/1000-ts>CSI_TTL_SECONDS)return;
  if(!Number.isInteger(seq)||seq<0||!Number.isInteger(samples)||samples<0||samples>10000)return;
- if(!['UNKNOWN','CALIBRATING','MOVEMENT_CANDIDATE','QUIET_SIGNAL'].includes(packet.state))return;
+ if(!['UNKNOWN','CALIBRATING','MOVEMENT_CANDIDATE','QUIET_SIGNAL','MICRO_VARIATION'].includes(packet.state))return;
  // RSSI / scores are diagnostic only; never classify someone as absent.
  if(!Number.isInteger(packet.rssi)||packet.rssi<-130||packet.rssi>20 ||
     !Number.isInteger(packet.score)||packet.score<0||packet.score>100000000)return;
  if(roomData&&seq<lastCsiSeq&&ts<=roomData.ts)return; // old telemetry
- roomData={ts,seq,state:packet.state,samples,rssi:packet.rssi,score:packet.score};
+ const micro=Number.isInteger(packet.micro_score)&&packet.micro_score>=0&&packet.micro_score<100000000?packet.micro_score:null;
+ const rate=Number.isInteger(packet.rate_x10)&&packet.rate_x10>=0&&packet.rate_x10<=2000?packet.rate_x10:null;
+ roomData={ts,seq,state:packet.state,samples,rssi:packet.rssi,score:packet.score,micro,rate};
  lastCsiSeq=seq;
  renderRoom();
 }
@@ -118,17 +120,20 @@ function renderRoom(){
  const state=recent?roomData.state:'UNKNOWN';
  const t={
   MOVEMENT_CANDIDATE:['Có biến động tín hiệu','ESP32 phát hiện biến động CSI đáng chú ý. Có thể do người di chuyển hoặc nhiễu vô tuyến; chưa xác nhận chắc chắn có người.'],
+  MICRO_VARIATION:['Phát hiện dao động CSI nhỏ','Tín hiệu trên các sóng mang con đang biến động nhẹ. Đây chưa phải bằng chứng về nhịp thở hoặc người đang nằm ngủ; có thể do nhiễu Wi-Fi.'],
   QUIET_SIGNAL:['Chưa thấy biến động lớn','Tín hiệu tương đối ổn định trong cửa sổ đo. Không đồng nghĩa phòng trống; người ngồi yên vẫn có thể ở trong phòng.'],
   CALIBRATING:['Đang hiệu chuẩn','ESP32 đang thu đường chuẩn Wi-Fi. Giữ nguyên vị trí router và ESP32, hạn chế di chuyển trong giai đoạn này.'],
   UNKNOWN:['Chưa có dữ liệu CSI','Không có số đo hợp lệ gần đây. Firmware có thể chưa bật CSI hoặc ESP32 đang mất đường truyền.']
  }[state];
  $('roomState').textContent=t[0];$('roomInterpretation').textContent=t[1];
  $('room').dataset.roomState=state.toLowerCase();
- $('roomIcon').textContent=state==='MOVEMENT_CANDIDATE'?'⌁':state==='CALIBRATING'?'◉':'◎';
- $('roomLive').textContent=recent?(state==='MOVEMENT_CANDIDATE'?'PHÁT HIỆN BIẾN ĐỘNG':state==='CALIBRATING'?'ĐANG HIỆU CHUẨN':'ĐANG NHẬN CSI'):'CHỜ DỮ LIỆU';
+ $('roomIcon').textContent=state==='MOVEMENT_CANDIDATE'?'⌁':state==='MICRO_VARIATION'?'≈':state==='CALIBRATING'?'◉':'◎';
+ $('roomLive').textContent=recent?(state==='MOVEMENT_CANDIDATE'?'PHÁT HIỆN BIẾN ĐỘNG':state==='MICRO_VARIATION'?'DAO ĐỘNG NHỎ':state==='CALIBRATING'?'ĐANG HIỆU CHUẨN':'ĐANG NHẬN CSI'):'CHỜ DỮ LIỆU';
  $('roomSamples').textContent=recent?String(roomData.samples):'--';
  $('roomRssi').textContent=recent?roomData.rssi+' dBm':'--';
  $('roomScore').textContent=recent?(roomData.score/100).toFixed(2):'--';
+ $('roomMicro').textContent=recent&&roomData.micro!==null?(roomData.micro/100).toFixed(2):'--';
+ $('roomRate').textContent=recent&&roomData.rate!==null?(roomData.rate/10).toFixed(1)+' Hz':'--';
  $('roomTimestamp').textContent=recent?
   'Bản tin '+Math.max(0,Math.floor(Date.now()/1000-roomData.ts))+' giây trước':'Chưa nhận bản tin hợp lệ trong 45 giây';
 }
