@@ -7,18 +7,19 @@
   <meta name="description" content="Tùng Lâm Automation · Dell Precision 7560 remote power control">
   <title>Dell Remote Power | Tùng Lâm Automation</title>
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo.png">
-  <link rel="stylesheet" href="./ui.css?v=8">
+  <link rel="stylesheet" href="./ui.css?v=9">
 </head>
 <body>
 <div class="app-shell">
   <aside class="sidebar" aria-label="Điều hướng">
     <div class="brand-lockup">
       <img class="brand-logo" src="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo-background.png" alt="Tùng Lâm Automation">
-      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v4.0</span></div>
+      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v4.1</span></div>
     </div>
     <div class="nav-label">HỆ THỐNG</div>
     <nav class="nav-links" aria-label="Các khu vực">
       <a class="nav-item active" href="#dashboard"><span class="nav-icon">▦</span> Tổng quan</a>
+      <a class="nav-item" href="#monitor"><span class="nav-icon">◫</span> Giám sát hệ thống</a>
       <a class="nav-item" href="#power"><span class="nav-icon">⏻</span> Điều khiển nguồn</a>
       <a class="nav-item" href="#schedule"><span class="nav-icon">◷</span> Lịch tắt máy</a>
       <a class="nav-item" href="#events"><span class="nav-icon">▤</span> Nhật ký</a>
@@ -65,7 +66,19 @@
       <article class="stat-card"><div class="metric-top"><span>LỊCH TẮT MÁY</span><span class="metric-icon amber">◷</span></div><strong id="timerState">CHƯA ĐẶT</strong><div class="metric-sub"><i id="timerDot" class="led"></i><span id="timerSummary">Không có lịch đang chạy</span></div></article>
     </section>
 
-    <div class="main-grid">
+    <section class="monitor-panel" id="monitor" aria-label="Giám sát Dell thời gian thực">
+  <div class="monitor-head"><div><div class="eyebrow">LIVE TELEMETRY / WINDOWS AGENT</div><h2>Giám sát hệ thống</h2><p>Chỉ số tổng hợp do Dell gửi qua kết nối MQTT/TLS.</p></div>
+  <div class="monitor-caption"><span class="monitor-live-badge" id="monitorBadge">CHỜ DỮ LIỆU</span><span id="monitorUpdated">Chưa nhận thông số</span></div></div>
+  <div class="monitor-grid">
+    <article class="monitor-card"><div class="monitor-label"><span>CPU</span><span class="monitor-mark">◈</span></div><strong id="monCpu">--</strong><div class="monitor-gauge"><span id="monCpuGauge"></span></div><small id="monCpuDetail">Đang chờ dữ liệu</small></article>
+    <article class="monitor-card"><div class="monitor-label"><span>RAM</span><span class="monitor-mark">▤</span></div><strong id="monRam">--</strong><div class="monitor-gauge"><span id="monRamGauge"></span></div><small id="monRamDetail">Đang chờ dữ liệu</small></article>
+    <article class="monitor-card"><div class="monitor-label"><span>PIN &amp; NGUỒN</span><span class="monitor-mark">ϟ</span></div><strong id="monBattery">--</strong><div class="monitor-gauge"><span id="monBatteryGauge"></span></div><small id="monPowerDetail">Đang chờ dữ liệu</small></article>
+    <article class="monitor-card"><div class="monitor-label"><span>ETHERNET</span><span class="monitor-mark">⌁</span></div><strong id="monEthernet">--</strong><div class="monitor-indicator"><i id="monNetDot" class="led"></i><span id="monEthernetDetail">Đang chờ dữ liệu</span></div></article>
+    <article class="monitor-card"><div class="monitor-label"><span>THỜI GIAN CHẠY</span><span class="monitor-mark">◷</span></div><strong id="monUptime">--</strong><div class="monitor-indicator"><i id="monUptimeDot" class="led"></i><span id="monUptimeDetail">Từ lần khởi động Windows</span></div></article>
+  </div>
+  <p class="monitor-note">Không truyền tên tài khoản, tiến trình, IP hoặc MAC. Thông số sẽ tự ẩn khi máy offline hoặc mất cập nhật.</p>
+</section>
+<div class="main-grid">
       <section id="power" class="panel power-panel">
         <div class="panel-heading"><div><div class="eyebrow">POWER MANAGEMENT</div><h2>Điều khiển nguồn</h2><p>Lệnh được gửi qua EMQX và xác nhận bởi thiết bị đích.</p></div><span class="section-icon">⚡</span></div>
         <div class="power-actions">
@@ -99,7 +112,7 @@
     </section>
     <footer class="footer"><span><i class="led ok"></i> TUNG LAM AUTOMATION · ENGINEERED FOR RELIABILITY</span><span>MQTT/TLS 8883 &nbsp; / &nbsp; WSS 8084 &nbsp; / &nbsp; ESP32 WOL</span></footer>
   </main>
-<nav class="mobile-dock" aria-label="Điều hướng nhanh"><a href="#dashboard" class="dock-item active" aria-label="Tổng quan"><span aria-hidden="true">⌂</span><small>Tổng quan</small></a><a href="#power" class="dock-item" aria-label="Điều khiển nguồn"><span aria-hidden="true">⏻</span><small>Điều khiển</small></a><a href="#schedule" class="dock-item" aria-label="Lịch tắt máy"><span aria-hidden="true">◷</span><small>Hẹn giờ</small></a><a href="#events" class="dock-item" aria-label="Nhật ký"><span aria-hidden="true">▤</span><small>Nhật ký</small></a></nav>
+<nav class="mobile-dock" aria-label="Điều hướng nhanh"><a href="#dashboard" class="dock-item active" aria-label="Tổng quan"><span aria-hidden="true">⌂</span><small>Tổng quan</small></a><a href="#monitor" class="dock-item" aria-label="Giám sát hệ thống"><span aria-hidden="true">◫</span><small>Giám sát</small></a><a href="#power" class="dock-item" aria-label="Điều khiển nguồn"><span aria-hidden="true">⏻</span><small>Điều khiển</small></a><a href="#schedule" class="dock-item" aria-label="Lịch tắt máy"><span aria-hidden="true">◷</span><small>Hẹn giờ</small></a><a href="#events" class="dock-item" aria-label="Nhật ký"><span aria-hidden="true">▤</span><small>Nhật ký</small></a></nav>
 </div>
 
 <dialog class="gw-modal" id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog" class="modal-body"><div class="modal-eyebrow">TUNGLAM · SECURITY CONFIRMATION</div><h2 id="confirmTitle">Xác nhận thao tác</h2><p id="confirmText"></p><div class="modal-actions"><button class="btn btn-outline" id="confirmNo" value="cancel">Hủy bỏ</button><button class="btn btn-danger" id="confirmYes" value="confirm">Xác nhận thực hiện</button></div></form></dialog>
@@ -118,5 +131,5 @@
 </div></dialog>
 <script src="./mqtt.min.js"></script>
 <script src="./icons.js?v=4"></script>
-<script src="./app.js?v=8"></script>
+<script src="./app.js?v=9"></script>
 </body></html>
