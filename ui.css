@@ -286,3 +286,47 @@ body{background:radial-gradient(ellipse 620px 400px at 58% -12%,rgba(48,112,191,
  .device-overview-actions{grid-template-columns:1fr}
  .dock-item small{font-size:8px}
 }
+
+/* v9 · Read-only Dell system monitor / telemetry */
+.monitor-panel{margin:0 0 16px;padding:21px 22px;background:var(--surface);border:1px solid var(--border-soft);border-radius:20px;box-shadow:0 12px 36px rgba(0,5,17,.12)}
+.monitor-head{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:16px}
+.monitor-head h2{margin:4px 0 3px;font-size:21px;font-weight:800;letter-spacing:-.035em}
+.monitor-head p{font-size:12px;margin:0}
+.monitor-caption{display:flex;gap:7px;align-items:flex-end;flex-direction:column;flex-shrink:0}
+.monitor-caption>span:last-child{font-size:10px;color:var(--muted)}
+.monitor-live-badge{font:800 9px/1.2 system-ui,sans-serif;letter-spacing:.09em;color:var(--muted);border:1px solid var(--border-soft);background:var(--surface-soft);padding:7px 9px;border-radius:20px}
+.monitor-live-badge.mon-live{border-color:rgba(52,211,153,.3);color:var(--accent);background:rgba(52,211,153,.08)}
+.monitor-live-badge.mon-live:before{content:'';display:inline-block;width:6px;height:6px;margin-right:6px;border-radius:50%;background:var(--accent)}
+.monitor-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:11px}
+.monitor-card{background:linear-gradient(165deg,var(--surface-soft),color-mix(in srgb,var(--surface) 95%,var(--cyan)));border:1px solid var(--border-soft);border-radius:14px;padding:15px 13px;min-width:0;min-height:143px;display:flex;flex-direction:column}
+.monitor-label{display:flex;align-items:center;justify-content:space-between;gap:5px;font-size:10px;color:var(--muted);font-weight:800;letter-spacing:.08em}
+.monitor-mark{font-size:22px;color:var(--cyan);line-height:1}
+.monitor-card strong{display:block;font-size:clamp(19px,2vw,26px);line-height:1.23;letter-spacing:-.045em;margin:14px 0 12px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.monitor-card small{font-size:10px;color:var(--muted);line-height:1.3;margin-top:auto}
+.monitor-gauge{height:5px;background:rgba(126,150,180,.2);border-radius:12px;overflow:hidden;margin:0 0 9px}
+.monitor-gauge>span{display:block;background:linear-gradient(90deg,var(--accent),var(--cyan));height:100%;border-radius:12px;transition:width .65s ease;max-width:100%}
+.monitor-card:nth-child(3) .monitor-gauge>span{background:linear-gradient(90deg,var(--cyan),var(--accent))}
+.monitor-indicator{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:10px;margin-top:auto}
+.monitor-indicator .led{width:7px;height:7px;flex-shrink:0}
+.monitor-note{font-size:10px;line-height:1.5;margin:13px 0 0;color:var(--muted)}
+@media(max-width:1160px) and (min-width:761px){.monitor-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){
+ .monitor-panel{padding:16px 12px;margin-bottom:11px;border-radius:16px}
+ .monitor-head{align-items:flex-start;margin-bottom:13px;gap:9px}
+ .monitor-head h2{font-size:19px}
+ .monitor-head p{font-size:11px}
+ .monitor-caption{max-width:135px;text-align:right}
+ .monitor-caption>span:last-child{font-size:9px}
+ .monitor-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .monitor-card{min-height:123px;padding:12px 11px;border-radius:12px}
+ .monitor-card strong{font-size:clamp(18px,5.5vw,23px);margin:10px 0}
+ .monitor-label{font-size:9px;letter-spacing:.035em}
+ .monitor-mark{font-size:18px}
+ .monitor-card:nth-child(5){grid-column:1/-1;min-height:94px}
+ .monitor-card:nth-child(5) strong{margin:7px 0 3px}
+ .monitor-note{font-size:9px}
+ .mobile-dock{grid-template-columns:repeat(5,minmax(0,1fr))}
+ .dock-item{gap:2px}
+ .dock-item small{font-size:8px}
+}
+@media(max-width:350px){.monitor-head{flex-direction:column}.monitor-caption{flex-direction:row;align-items:center;max-width:100%;text-align:left}.monitor-card strong{font-size:18px}.dock-item small{font-size:7.5px}}
