@@ -79,16 +79,25 @@ function renderCountdown(){
  }
 }
 function applyPresence(packet){
+ const wasOnline=agentOnline,wasTimerSupported=timerSupported;
+ const wasDeadline=shutdownDeadline,wasKind=shutdownKind;
  agentOnline=packet.result==='power_agent_online';
- timerSupported=agentOnline && (packet.capabilities?.includes?.('schedule_v2')===true);
+ timerSupported=agentOnline&&(packet.capabilities?.includes?.('schedule_v2')===true);
  const target=packet.scheduled_for;
  if(agentOnline&&Number.isInteger(target)&&target>0){
    setScheduleDeadline(target,packet.scheduled_kind);
- } else if(packet.result==='power_agent_online'&&('scheduled_for' in packet)){
+ }else if(packet.result==='power_agent_online'&&('scheduled_for' in packet)){
    setScheduleDeadline(null,null);
  }
  updateState();
- log('info',agentOnline?'Windows agent đã kết nối'+(timerSupported?' · hỗ trợ hẹn giờ':' · bản cũ, chưa hỗ trợ lịch mới'):'Windows agent đang offline');
+ // The Windows agent refreshes retained presence every 20 seconds.
+ // Only log changes, not identical heartbeats that would flood mobile history.
+ if(wasOnline!==agentOnline||wasTimerSupported!==timerSupported||
+    wasDeadline!==shutdownDeadline||wasKind!==shutdownKind){
+   log('info',agentOnline?'Windows agent đã kết nối'+
+     (timerSupported?' · hỗ trợ hẹn giờ':' · bản cũ, chưa hỗ trợ lịch mới'):
+     'Windows agent đang offline');
+ }
 }
 function randomHex(bytes=8){const b=new Uint8Array(bytes);crypto.getRandomValues(b);return Array.from(b,v=>v.toString(16).padStart(2,'0')).join('').toUpperCase();}
 function setAdvanced(visible){
