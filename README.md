@@ -67,3 +67,23 @@ The existing ESP32 WROOM-32 can collect Wi-Fi Channel State Information (CSI) fr
 - Synthetic C tests passed 7/7. A **150-second UNLABELED** real-world capture contained 30/30 QUIET_SIGNAL observations, with spectral fit **0–1%**, mean **0.73%**. No reliable sleeper presence was identified.
 - An **EMPTY_CONFIRMED** room baseline has **not** yet been recorded; it requires current confirmation that the room is empty. No claim of classification accuracy can be made yet.
 - Source firmware and labeled/unlabeled measurement CSVs remain private on the Windows workstation, not in this GitHub Pages repository.
+
+
+## Control Deck v4.5 — ESP32 buzzer & daily alarm (MQTT/TLS)
+
+One GitHub Pages HTTPS dashboard controls Dell Wake-on-LAN and the ESP32 GPIO4 active-high buzzer **from any network** using the existing EMQX Cloud WSS connection. Neither GitHub Pages nor the browser contacts the ESP32's private LAN HTTP endpoint. No additional router port forwarding, hardware or cloud secret is introduced.
+
+The ESP32 extends the existing `home/dell7560/cmd` command topic with an explicit allowlist:
+- `BEEP|<expires>|<request-id>`
+- `ALARM_SET|<expires>|<request-id>|HHMM` (daily local UTC+07)
+- `ALARM_OFF|<expires>|<request-id>`
+- `ALARM_STOP|<expires>|<request-id>`
+- `ALARM_STATUS|<expires>|<request-id>`
+
+The original `WAKE` wire format is unchanged. Every command is non-retained, time-limited, and deduplicated through the existing firmware command guard. Alarm modifications occur in a separate FreeRTOS queue/task, are persisted to ESP32 NVS, and return request-correlated acknowledgements on the existing `/ack` topic. A non-retained telemetry packet with `id=BBBBBBBBBBBBBBBB`, `result=buzzer_status`, and timestamp communicates buzzer availability, daily schedule, clock sync and ringing state every approximately 15 seconds. The UI disables controls unless fresh device capability telemetry has been observed; older ESP32 firmware remains compatible with Wake control and monitoring.
+
+Alarm beeps are intermittent and limited by firmware to 45 seconds. Wake beeps acknowledge the **sending** of a WOL UDP packet, not the Dell's boot state. The standalone local ESP32 web interface remains available on a trusted LAN.
+
+**Security:** This workflow relies on the existing EMQX authenticated MQTT account/ACLs for `cmd`, `ack` and `status`; command IDs and expiration prevent accidental replay but are not a substitute for broker access control. No password, SSID, binary or private device configuration is checked into this public repo. GPIO4 wiring and buzzer current must still respect ESP32 3.3V GPIO electrical limits.
+
+**Verification:** Device firmware compiled successfully under ESP-IDF. Browser MQTT mock tests passed at 320, 390 and 1440 px, covering beep, daily alarm set, ringing stop, schedule disable, and continuity of the Wake button. Actual cloud command acceptance and physical buzzer sound require separate live confirmation.
