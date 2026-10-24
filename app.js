@@ -144,12 +144,12 @@ function renderRoom(){
  $('roomRate').textContent=recent&&roomData.rate!==null?(roomData.rate/10).toFixed(1)+' Hz':'--';
  const periodic=recent&&roomData.periodValid;
  $('roomPeriodQuality').textContent=periodic?roomData.quality+'%':'--';
- $('roomPeriodCpm').textContent=periodic?(roomData.cpm/10).toFixed(1)+' chu kỳ/phút':'--';
+ $('roomPeriodCpm').textContent=periodic?(roomData.quality>=10?(roomData.cpm/10).toFixed(1)+' chu kỳ/phút':'Không rõ'):'--';
  $('roomPeriodWindow').textContent=periodic?roomData.windowSec+' giây':'--';
- $('roomPeriodState').textContent=periodic?'ĐÃ PHÂN TÍCH':'CHỜ DỮ LIỆU 60–120 GIÂY';
+ $('roomPeriodState').textContent=periodic?(roomData.quality>=10?'ĐÃ PHÂN TÍCH':'CHƯA CÓ CHU KỲ RÕ'):'CHỜ DỮ LIỆU 60–120 GIÂY';
  $('roomPeriodState').className='periodic-signal '+(periodic?'ready':'');
  $('roomPeriodNote').textContent=periodic?
-  'Độ khớp '+roomData.quality+'% là phần biến thiên RF khớp với mô hình tuần hoàn, KHÔNG phải độ tin cậy phát hiện người hay nhịp thở.':
+  'Độ khớp '+roomData.quality+'% là tỷ lệ biến thiên RF được mô hình tuần hoàn giải thích. '+(roomData.quality<10?'Chưa có đỉnh tuần hoàn RF nổi bật. ':'')+'Đây KHÔNG phải độ tin cậy phát hiện người hay nhịp thở.':
   'Chưa có đủ dữ liệu hợp lệ. Chỉ số RF không xác nhận trong phòng có người hay không.';
  $('roomTimestamp').textContent=recent?
   'Bản tin '+Math.max(0,Math.floor(Date.now()/1000-roomData.ts))+' giây trước':'Chưa nhận bản tin hợp lệ trong 45 giây';
