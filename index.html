@@ -7,14 +7,14 @@
   <meta name="description" content="Tùng Lâm Automation · Dell Precision 7560 remote power control">
   <title>Dell Remote Power | Tùng Lâm Automation</title>
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo.png">
-  <link rel="stylesheet" href="./ui.css?v=5">
+  <link rel="stylesheet" href="./ui.css?v=6">
 </head>
 <body>
 <div class="app-shell">
   <aside class="sidebar" aria-label="Điều hướng">
     <div class="brand-lockup">
       <img class="brand-logo" src="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo-background.png" alt="Tùng Lâm Automation">
-      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v3.2</span></div>
+      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v3.3</span></div>
     </div>
     <div class="nav-label">HỆ THỐNG</div>
     <nav class="nav-links" aria-label="Các khu vực">
@@ -39,6 +39,7 @@
       <div class="topbar-actions">
         <span class="pill" id="cloudPill"><i class="led"></i><span id="cloudTop">Cloud chưa kết nối</span></span>
         <button class="icon-button" id="reconnect" type="button" title="Kết nối lại MQTT" aria-label="Kết nối lại MQTT">⟳</button>
+        <button class="icon-button mobile-settings" id="settingsShortcut" type="button" title="Settings · Cấu hình MQTT" aria-label="Mở Settings MQTT"><svg class="tl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l-1.9 1.9a1.7 1.7 0 0 0-1.86-.35l-.96.4-.4 1.72H9.38l-.4-1.72-.96-.4a1.7 1.7 0 0 0-1.87.34l-1.9-1.9a1.7 1.7 0 0 0 .35-1.86l.4-.96L2.5 13.6V10.4l1.72-.4.4-.96a1.7 1.7 0 0 0-.35-1.86l1.9-1.9a1.7 1.7 0 0 0 1.86.35l.96-.4.4-1.72h5.24l.4 1.72.96.4a1.7 1.7 0 0 0 1.86-.35l1.9 1.9a1.7 1.7 0 0 0-.35 1.86l.4.96 1.72.4v3.2l-1.72.4-.4.96Z"/></svg></button>
         <button class="icon-button mobile-theme" id="themeMobile" type="button" title="Đổi giao diện">◐</button>
       </div>
     </header>
@@ -96,16 +97,19 @@
 
 <dialog class="gw-modal" id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog" class="modal-body"><div class="modal-eyebrow">TUNGLAM · SECURITY CONFIRMATION</div><h2 id="confirmTitle">Xác nhận thao tác</h2><p id="confirmText"></p><div class="modal-actions"><button class="btn btn-outline" id="confirmNo" value="cancel">Hủy bỏ</button><button class="btn btn-danger" id="confirmYes" value="confirm">Xác nhận thực hiện</button></div></form></dialog>
 
-<dialog class="gw-modal settings-modal" id="settings" aria-labelledby="settingsTitle"><div class="modal-body"><div class="modal-eyebrow">CLOUD / CONNECTION PROFILE</div><h2 id="settingsTitle">Cấu hình EMQX Cloud</h2><p class="modal-intro">Chỉ cần thiết lập một lần bằng tài khoản MQTT <b>Dell-Phone</b>. Không nhập mật khẩu quản trị EMQX.</p>
-  <label for="host">Broker hostname</label><input id="host" placeholder="j1199ec9.ala.asia-southeast1.emqxsl.com" spellcheck="false" autocomplete="off">
-  <label for="user">MQTT username</label><input id="user" placeholder="Dell-Phone" autocomplete="off" spellcheck="false">
-  <label for="pass">MQTT password</label><input id="pass" type="password" placeholder="Mật khẩu MQTT Dell-Phone" autocomplete="off">
-  <label for="topic">Topic prefix</label><input id="topic" value="home/dell7560" autocomplete="off" spellcheck="false">
-  <label class="checkrow"><input id="remember" type="checkbox"> <span>Ghi nhớ mật khẩu trên điện thoại này</span></label>
-  <p class="fineprint">Khi bật ghi nhớ, trình duyệt lưu mật khẩu dưới dạng văn bản trong bộ nhớ của chính thiết bị. Không bật trên máy dùng chung.</p>
-  <div class="modal-actions"><button class="btn btn-outline" type="button" id="configClose">Đóng</button><button class="btn btn-primary" type="button" id="connect">Lưu &amp; kết nối</button></div>
+<dialog class="gw-modal settings-modal" id="settings" aria-labelledby="settingsTitle"><div class="modal-body"><div class="modal-eyebrow">SECURE CLOUD CONNECTION</div><h2 id="settingsTitle">Kết nối Dell Remote Power</h2><p class="modal-intro">Nhập mật khẩu MQTT của tài khoản <b>Dell-Phone</b> để kết nối an toàn.</p>
+  <label for="pass">Mật khẩu MQTT</label><input id="pass" type="password" placeholder="Nhập mật khẩu Dell-Phone" autocomplete="off" autofocus>
+  <label class="checkrow"><input id="remember" type="checkbox"> <span>Ghi nhớ trên thiết bị cá nhân này</span></label>
+  <button class="profile-settings-toggle" type="button" id="advancedToggle" aria-expanded="false" aria-controls="advancedSettings"><svg class="tl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l-1.9 1.9a1.7 1.7 0 0 0-1.86-.35l-.96.4-.4 1.72H9.38l-.4-1.72-.96-.4a1.7 1.7 0 0 0-1.87.34l-1.9-1.9a1.7 1.7 0 0 0 .35-1.86l-.4-.96L2.5 13.6V10.4l1.72-.4.4-.96a1.7 1.7 0 0 0-.35-1.86l1.9-1.9a1.7 1.7 0 0 0 1.86.35l.96-.4.4-1.72h5.24l.4 1.72.96.4a1.7 1.7 0 0 0 1.86-.35l1.9 1.9a1.7 1.7 0 0 0-.35 1.86l.4.96 1.72.4v3.2l-1.72.4-.4.96Z"/></svg><span id="advancedToggleLabel">Settings · Cấu hình nâng cao</span><span aria-hidden="true" class="settings-chevron">⌄</span></button>
+  <div id="advancedSettings" class="advanced-fields" hidden><p class="fineprint">Chỉ thay đổi các mục này khi chuyển broker hoặc tài khoản MQTT.</p>
+    <label for="host">Broker hostname</label><input id="host" value="j1199ec9.ala.asia-southeast1.emqxsl.com" autocomplete="off" spellcheck="false">
+    <label for="user">MQTT username</label><input id="user" value="Dell-Phone" autocomplete="off" spellcheck="false">
+    <label for="topic">Topic prefix</label><input id="topic" value="home/dell7560" autocomplete="off" spellcheck="false">
+  </div>
+  <p class="fineprint">Không nhập mật khẩu quản trị EMQX. Ghi nhớ sẽ lưu mật khẩu trong bộ nhớ trình duyệt; không dùng trên thiết bị chia sẻ.</p>
+  <div class="modal-actions"><button class="btn btn-outline" type="button" id="configClose">Đóng</button><button class="btn btn-primary" type="button" id="connect">Kết nối</button></div>
 </div></dialog>
 <script src="./mqtt.min.js"></script>
 <script src="./icons.js?v=4"></script>
-<script src="./app.js?v=4"></script>
+<script src="./app.js?v=6"></script>
 </body></html>
