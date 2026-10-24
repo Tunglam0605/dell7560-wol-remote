@@ -31,6 +31,70 @@ function log(level,description){
  $('message').textContent=description;
 }
 function setLed(id,state){$(id).className='led '+(state||'');}
+
+let monitorSnapshot=null;
+function metricNumber(x,min=0,max=100){
+ return typeof x==='number'&&Number.isFinite(x)&&x>=min&&x<=max?x:null;
+}
+function captureMonitor(v){
+ if(!v||typeof v!=='object')return;
+ const ts=metricNumber(v.ts,1600000000,4102444800);
+ if(ts===null||Math.abs(Date.now()/1000-ts)>150)return;
+ monitorSnapshot={
+  ts,
+  cpu_pct:metricNumber(v.cpu_pct),
+  ram_used_pct:metricNumber(v.ram_used_pct),
+  ram_used_gb:metricNumber(v.ram_used_gb,0,1024),
+  ram_total_gb:metricNumber(v.ram_total_gb,0,1024),
+  uptime_sec:metricNumber(v.uptime_sec,0,315360000),
+  battery_pct:metricNumber(v.battery_pct),
+  ac_online:typeof v.ac_online==='boolean'?v.ac_online:null,
+  charging:typeof v.charging==='boolean'?v.charging:null,
+  ethernet_link:typeof v.ethernet_link==='boolean'?v.ethernet_link:null,
+  ethernet_mbps:metricNumber(v.ethernet_mbps,0,1000000)
+ };
+ renderMonitor();
+}
+function formatUptime(sec){
+ if(sec===null)return '--';
+ const d=Math.floor(sec/86400),h=Math.floor(sec%86400/3600),m=Math.floor(sec%3600/60);
+ return d?d+' ngày '+h+' giờ':h?h+' giờ '+m+' phút':m+' phút';
+}
+function renderMonitor(){
+ const data=monitorSnapshot;
+ const fresh=connected&&agentOnline&&data&&Date.now()/1000-data.ts<85;
+ const formatPct=x=>x===null?'--':Math.round(x)+'%';
+ const set=(id,val)=>{$(id).textContent=val};
+ const bar=(id,val)=>{$(id).style.width=fresh&&val!==null?Math.round(val)+'%':'0%'};
+ set('monCpu',fresh?formatPct(data.cpu_pct):'--');bar('monCpuGauge',fresh?data.cpu_pct:null);
+ set('monRam',fresh?formatPct(data.ram_used_pct):'--');bar('monRamGauge',fresh?data.ram_used_pct:null);
+ set('monRamDetail',fresh&&data.ram_used_gb!==null&&data.ram_total_gb!==null?
+   data.ram_used_gb.toFixed(1)+' / '+data.ram_total_gb.toFixed(1)+' GB':'Đang chờ dữ liệu');
+ set('monBattery',fresh?formatPct(data.battery_pct):'--');bar('monBatteryGauge',fresh?data.battery_pct:null);
+ let supply='Đang chờ dữ liệu';
+ if(fresh){
+  if(data.ac_online===true)supply=data.charging===true?'Đang sạc · nguồn AC':'Đang cắm nguồn AC';
+  else if(data.ac_online===false)supply='Đang sử dụng pin';
+  else supply='Không đọc được trạng thái nguồn';
+ }
+ set('monPowerDetail',supply);
+ const link=fresh?data.ethernet_link:null;
+ set('monEthernet',link===true?'CONNECTED':link===false?'OFFLINE':'--');
+ set('monEthernetDetail',link===true&&data.ethernet_mbps!==null?
+   data.ethernet_mbps>=1000?(data.ethernet_mbps/1000).toFixed(data.ethernet_mbps%1000===0?0:1)+' Gbps':
+   data.ethernet_mbps+' Mbps':link===false?'Không có liên kết LAN':'Đang chờ dữ liệu');
+ $('monNetDot').className='led '+(link===true?'ok':link===false?'bad':'');
+ set('monUptime',fresh?formatUptime(data.uptime_sec):'--');
+ $('monUptimeDot').className='led '+(fresh?'ok':'');
+ set('monCpuDetail',fresh&&data.cpu_pct!==null?'Mức sử dụng bộ xử lý':'Đang chờ dữ liệu');
+ const badge=$('monitorBadge');
+ badge.className='monitor-live-badge '+(fresh?'mon-live':'mon-wait');
+ badge.textContent=fresh?'ĐANG CẬP NHẬT':'CHỜ DỮ LIỆU';
+ const elapsed=data?Math.round(Date.now()/1000-data.ts):null;
+ set('monitorUpdated',fresh?(elapsed<=10?'Vừa cập nhật':'Cập nhật '+elapsed+' giây trước'):
+  (data?'Chỉ số cũ đã được ẩn':'Chưa nhận thông số'));
+}
+
 function refreshOverview(){
  const head=$('deviceHeadline'),sub=$('deviceSummary'),badge=$('deviceBadge'),light=$('deviceLight');
  let mode='unknown',title='Chưa xác minh được trạng thái Dell',detail='Chưa có dữ liệu mới từ hệ thống.';
@@ -76,6 +140,7 @@ function updateState(){
  $('cancelStrip').hidden=!shutdownDeadline;
  $('cancelSchedule').hidden=!shutdownDeadline;
  refreshOverview();
+ renderMonitor();
 }
 function setScheduleDeadline(value,kind){
  const target=Number(value);
@@ -110,6 +175,7 @@ function renderCountdown(){
 function applyPresence(packet){
  lastStateAt=Date.now();
  lastAgentHeartbeatAt=packet.result==='power_agent_online'?Date.now():0;
+ if(packet.result==='power_agent_online'&&packet.telemetry)captureMonitor(packet.telemetry);
  const wasOnline=agentOnline,wasTimerSupported=timerSupported;
  const wasDeadline=shutdownDeadline,wasKind=shutdownKind;
  agentOnline=packet.result==='power_agent_online';
@@ -300,7 +366,7 @@ function init(){
   document.querySelectorAll('.dock-item').forEach(a=>a.addEventListener('click',()=>{
     document.querySelectorAll('.dock-item').forEach(x=>x.classList.toggle('active',x===a));
   }));
-  const sections=['dashboard','power','schedule','events'].map(id=>$(id));
+  const sections=['dashboard','monitor','power','schedule','events'].map(id=>$(id));
   if('IntersectionObserver' in window){
     const obs=new IntersectionObserver(entries=>{
       const visible=entries.filter(e=>e.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
@@ -316,9 +382,10 @@ function init(){
       updateState();
     }
     refreshOverview();
+    renderMonitor();
   },5000);
   setInterval(renderCountdown,1000);
-  renderCountdown();updateState();refreshSchedulePreview();
+  renderCountdown();updateState();refreshSchedulePreview();renderMonitor();
   if(loadConfig())connect();else openSettings(false);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
