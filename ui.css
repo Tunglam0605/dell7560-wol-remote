@@ -87,3 +87,68 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
  .panel{padding:15px 12px}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
+
+/* v5: mobile-only compact command center header. Desktop untouched. */
+@media (max-width:760px){
+ .app-shell{position:relative}
+ .sidebar{
+   height:62px;min-height:62px;display:flex;align-items:center;
+   padding:8px 12px;position:relative;z-index:2;
+   border-bottom:1px solid var(--border-soft)
+ }
+ .brand-lockup{display:flex;justify-content:flex-start;align-items:center;flex:0 0 152px;width:152px;min-width:0;padding:0}
+ .brand-logo{display:block;width:142px;max-width:100%;height:36px;object-fit:contain;object-position:left center}
+ .brand-caption{display:none}
+ .content{padding-top:0}
+ .topbar{
+   position:absolute;top:0;right:10px;z-index:3;width:auto;height:62px;
+   border:0;display:flex;align-items:center;justify-content:flex-end;
+   padding:0;gap:5px;background:transparent
+ }
+ .topbar .breadcrumb{display:none}
+ .topbar-actions{gap:6px}
+ .topbar .pill{padding:6px 9px;max-width:133px;font-size:10px}
+ .topbar .pill span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .topbar .icon-button{width:32px;height:32px;border-radius:9px}
+ .hero{margin:11px 0 12px;padding:18px 16px}
+ .hero .eyebrow{font-size:9px;letter-spacing:.09em}
+ .hero h1{font-size:clamp(22px,5.7vw,29px);margin:8px 0 10px}
+ .hero p{font-size:12px;margin-bottom:0}
+ .metrics{margin-top:10px;gap:8px}
+ .stat-card{min-height:99px;padding:11px 10px}
+ .stat-card strong{margin-top:8px}
+ .metric-top{gap:4px}
+ .metric-icon{width:25px;height:25px}
+ .metric-sub{line-height:1.3}
+ .main-grid{gap:10px;margin-top:11px}
+ .panel-heading{margin-bottom:12px}
+ .power-panel .panel-heading p{display:none}
+ .action-tile{min-height:0}
+ .action-tile p{min-height:0;margin-bottom:13px}
+ .action-tile .tile-icon{margin:9px 0}
+ .power-actions .btn{margin-top:auto}
+ .schedule-panel .panel-heading p{font-size:11px}
+ .timer-display{margin-top:12px}
+}
+@media(max-width:440px){
+ .brand-lockup{flex-basis:120px;width:120px}
+ .brand-logo{width:113px;height:33px}
+ .topbar{right:8px}
+ .topbar .pill{max-width:113px;font-size:9px;padding:6px}
+ .topbar .icon-button{width:30px;height:30px}
+ .content{padding:0 11px 70px}
+ .panel{padding:15px 12px}
+ .power-actions{grid-template-columns:minmax(0,1fr)}
+ .action-tile{padding:14px;display:grid;grid-template-columns:44px 1fr;column-gap:12px;align-items:start}
+ .action-tile .tile-badge{grid-column:1/-1;justify-self:start}
+ .action-tile .tile-icon{grid-column:1;grid-row:2/4;margin:12px 0 0}
+ .action-tile h3{grid-column:2;grid-row:2;margin:10px 0 3px}
+ .action-tile p{grid-column:2;grid-row:3;margin:0 0 11px}
+ .action-tile .btn{grid-column:1/-1;margin-top:8px;min-height:45px}
+ .action-tile .btn > span{display:flex}
+}
+@media(max-width:340px){
+ .brand-lockup{flex-basis:91px;width:91px}
+ .brand-logo{width:88px}
+ .topbar .pill{max-width:97px}
+}
