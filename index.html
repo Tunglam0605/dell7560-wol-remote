@@ -7,18 +7,19 @@
   <meta name="description" content="Tùng Lâm Automation · Dell Precision 7560 remote power control">
   <title>Dell Remote Power | Tùng Lâm Automation</title>
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo.png">
-  <link rel="stylesheet" href="./ui.css?v=9">
+  <link rel="stylesheet" href="./ui.css?v=10">
 </head>
 <body>
 <div class="app-shell">
   <aside class="sidebar" aria-label="Điều hướng">
     <div class="brand-lockup">
       <img class="brand-logo" src="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo-background.png" alt="Tùng Lâm Automation">
-      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v4.1</span></div>
+      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v4.2</span></div>
     </div>
     <div class="nav-label">HỆ THỐNG</div>
     <nav class="nav-links" aria-label="Các khu vực">
       <a class="nav-item active" href="#dashboard"><span class="nav-icon">▦</span> Tổng quan</a>
+      <a class="nav-item" href="#room"><span class="nav-icon">⌁</span> Giám sát phòng</a>
       <a class="nav-item" href="#monitor"><span class="nav-icon">◫</span> Giám sát hệ thống</a>
       <a class="nav-item" href="#power"><span class="nav-icon">⏻</span> Điều khiển nguồn</a>
       <a class="nav-item" href="#schedule"><span class="nav-icon">◷</span> Lịch tắt máy</a>
@@ -66,7 +67,28 @@
       <article class="stat-card"><div class="metric-top"><span>LỊCH TẮT MÁY</span><span class="metric-icon amber">◷</span></div><strong id="timerState">CHƯA ĐẶT</strong><div class="metric-sub"><i id="timerDot" class="led"></i><span id="timerSummary">Không có lịch đang chạy</span></div></article>
     </section>
 
-    <section class="monitor-panel" id="monitor" aria-label="Giám sát Dell thời gian thực">
+    
+<section class="room-panel" id="room" aria-label="Phát hiện biến động Wi-Fi trong phòng">
+  <div class="room-header">
+    <div><div class="eyebrow">EXPERIMENTAL / WI-FI CSI</div><h2>Giám sát phòng</h2>
+    <p>ESP32 phân tích biến động tín hiệu giữa router và thiết bị, cách nhau khoảng 4–5 m.</p></div>
+    <span class="room-live" id="roomLive">ĐANG CHỜ CSI</span>
+  </div>
+  <div class="room-content">
+    <div class="room-orbit" aria-hidden="true"><div class="room-orbit-lines"></div><div class="room-orbit-core"><span id="roomIcon">⌁</span></div><i class="room-orbit-dot"></i></div>
+    <div class="room-analysis">
+      <div class="room-state" id="roomState">Chưa có dữ liệu CSI</div>
+      <p class="room-interpretation" id="roomInterpretation">Bản firmware hiện tại có thể chưa bật chức năng đo. Không thể xác nhận trong phòng có người hay không.</p>
+      <div class="room-stats">
+        <span>Số mẫu <strong id="roomSamples">--</strong></span>
+        <span>RSSI <strong id="roomRssi">--</strong></span>
+        <span>Điểm biến động <strong id="roomScore">--</strong></span>
+      </div>
+      <div class="room-foot"><span id="roomTimestamp">Chưa nhận bản tin</span><span>Không dùng làm hệ thống báo động</span></div>
+    </div>
+  </div>
+</section>
+<section class="monitor-panel" id="monitor" aria-label="Giám sát Dell thời gian thực">
   <div class="monitor-head"><div><div class="eyebrow">LIVE TELEMETRY / WINDOWS AGENT</div><h2>Giám sát hệ thống</h2><p>Chỉ số tổng hợp do Dell gửi qua kết nối MQTT/TLS.</p></div>
   <div class="monitor-caption"><span class="monitor-live-badge" id="monitorBadge">CHỜ DỮ LIỆU</span><span id="monitorUpdated">Chưa nhận thông số</span></div></div>
   <div class="monitor-grid">
@@ -112,7 +134,7 @@
     </section>
     <footer class="footer"><span><i class="led ok"></i> TUNG LAM AUTOMATION · ENGINEERED FOR RELIABILITY</span><span>MQTT/TLS 8883 &nbsp; / &nbsp; WSS 8084 &nbsp; / &nbsp; ESP32 WOL</span></footer>
   </main>
-<nav class="mobile-dock" aria-label="Điều hướng nhanh"><a href="#dashboard" class="dock-item active" aria-label="Tổng quan"><span aria-hidden="true">⌂</span><small>Tổng quan</small></a><a href="#monitor" class="dock-item" aria-label="Giám sát hệ thống"><span aria-hidden="true">◫</span><small>Giám sát</small></a><a href="#power" class="dock-item" aria-label="Điều khiển nguồn"><span aria-hidden="true">⏻</span><small>Điều khiển</small></a><a href="#schedule" class="dock-item" aria-label="Lịch tắt máy"><span aria-hidden="true">◷</span><small>Hẹn giờ</small></a><a href="#events" class="dock-item" aria-label="Nhật ký"><span aria-hidden="true">▤</span><small>Nhật ký</small></a></nav>
+<nav class="mobile-dock" aria-label="Điều hướng nhanh"><a href="#dashboard" class="dock-item active" aria-label="Tổng quan"><span aria-hidden="true">⌂</span><small>Tổng quan</small></a><a href="#room" class="dock-item" aria-label="Giám sát phòng"><span aria-hidden="true">⌁</span><small>Phòng</small></a><a href="#monitor" class="dock-item" aria-label="Giám sát hệ thống"><span aria-hidden="true">◫</span><small>Giám sát</small></a><a href="#power" class="dock-item" aria-label="Điều khiển nguồn"><span aria-hidden="true">⏻</span><small>Điều khiển</small></a><a href="#schedule" class="dock-item" aria-label="Lịch tắt máy"><span aria-hidden="true">◷</span><small>Hẹn giờ</small></a><a href="#events" class="dock-item" aria-label="Nhật ký"><span aria-hidden="true">▤</span><small>Nhật ký</small></a></nav>
 </div>
 
 <dialog class="gw-modal" id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog" class="modal-body"><div class="modal-eyebrow">TUNGLAM · SECURITY CONFIRMATION</div><h2 id="confirmTitle">Xác nhận thao tác</h2><p id="confirmText"></p><div class="modal-actions"><button class="btn btn-outline" id="confirmNo" value="cancel">Hủy bỏ</button><button class="btn btn-danger" id="confirmYes" value="confirm">Xác nhận thực hiện</button></div></form></dialog>
@@ -131,5 +153,5 @@
 </div></dialog>
 <script src="./mqtt.min.js"></script>
 <script src="./icons.js?v=4"></script>
-<script src="./app.js?v=9"></script>
+<script src="./app.js?v=10"></script>
 </body></html>
