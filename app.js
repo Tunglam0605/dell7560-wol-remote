@@ -95,6 +95,44 @@ function renderMonitor(){
   (data?'Chỉ số cũ đã được ẩn':'Chưa nhận thông số'));
 }
 
+
+const CSI_STATUS_ID='CCCCCCCCCCCCCCCC';
+let roomData=null,lastCsiSeq=-1;
+const CSI_TTL_SECONDS=45;
+function applyRoomSignal(packet){
+ if(packet.result!=='csi_sample')return;
+ const ts=Number(packet.ts),seq=Number(packet.seq),samples=Number(packet.samples);
+ if(!Number.isInteger(ts)||ts<1600000000||ts>Date.now()/1000+15||Date.now()/1000-ts>CSI_TTL_SECONDS)return;
+ if(!Number.isInteger(seq)||seq<0||!Number.isInteger(samples)||samples<0||samples>10000)return;
+ if(!['UNKNOWN','CALIBRATING','MOVEMENT_CANDIDATE','QUIET_SIGNAL'].includes(packet.state))return;
+ // RSSI / scores are diagnostic only; never classify someone as absent.
+ if(!Number.isInteger(packet.rssi)||packet.rssi<-130||packet.rssi>20 ||
+    !Number.isInteger(packet.score)||packet.score<0||packet.score>100000000)return;
+ if(roomData&&seq<lastCsiSeq&&ts<=roomData.ts)return; // old telemetry
+ roomData={ts,seq,state:packet.state,samples,rssi:packet.rssi,score:packet.score};
+ lastCsiSeq=seq;
+ renderRoom();
+}
+function renderRoom(){
+ const recent=connected&&espOnline&&roomData&&Date.now()/1000-roomData.ts<CSI_TTL_SECONDS;
+ const state=recent?roomData.state:'UNKNOWN';
+ const t={
+  MOVEMENT_CANDIDATE:['Có biến động tín hiệu','ESP32 phát hiện biến động CSI đáng chú ý. Có thể do người di chuyển hoặc nhiễu vô tuyến; chưa xác nhận chắc chắn có người.'],
+  QUIET_SIGNAL:['Chưa thấy biến động lớn','Tín hiệu tương đối ổn định trong cửa sổ đo. Không đồng nghĩa phòng trống; người ngồi yên vẫn có thể ở trong phòng.'],
+  CALIBRATING:['Đang hiệu chuẩn','ESP32 đang thu đường chuẩn Wi-Fi. Giữ nguyên vị trí router và ESP32, hạn chế di chuyển trong giai đoạn này.'],
+  UNKNOWN:['Chưa có dữ liệu CSI','Không có số đo hợp lệ gần đây. Firmware có thể chưa bật CSI hoặc ESP32 đang mất đường truyền.']
+ }[state];
+ $('roomState').textContent=t[0];$('roomInterpretation').textContent=t[1];
+ $('room').dataset.roomState=state.toLowerCase();
+ $('roomIcon').textContent=state==='MOVEMENT_CANDIDATE'?'⌁':state==='CALIBRATING'?'◉':'◎';
+ $('roomLive').textContent=recent?(state==='MOVEMENT_CANDIDATE'?'PHÁT HIỆN BIẾN ĐỘNG':state==='CALIBRATING'?'ĐANG HIỆU CHUẨN':'ĐANG NHẬN CSI'):'CHỜ DỮ LIỆU';
+ $('roomSamples').textContent=recent?String(roomData.samples):'--';
+ $('roomRssi').textContent=recent?roomData.rssi+' dBm':'--';
+ $('roomScore').textContent=recent?(roomData.score/100).toFixed(2):'--';
+ $('roomTimestamp').textContent=recent?
+  'Bản tin '+Math.max(0,Math.floor(Date.now()/1000-roomData.ts))+' giây trước':'Chưa nhận bản tin hợp lệ trong 45 giây';
+}
+
 function refreshOverview(){
  const head=$('deviceHeadline'),sub=$('deviceSummary'),badge=$('deviceBadge'),light=$('deviceLight');
  let mode='unknown',title='Chưa xác minh được trạng thái Dell',detail='Chưa có dữ liệu mới từ hệ thống.';
@@ -237,6 +275,7 @@ function connect(){
  if(typeof mqtt==='undefined'){log('error','Thiếu thư viện MQTT.js');return}
  saveConfig(cfg);if(mqttClient){try{mqttClient.end(true)}catch{}}
  connected=false;espOnline=false;agentOnline=false;timerSupported=false;
+ roomData=null;lastCsiSeq=-1;renderRoom();
  pending=null;prefix=cfg.topic;updateState();
  log('info','Đang kết nối EMQX Cloud qua WSS/TLS...');
  const c=mqtt.connect('wss://'+cfg.host+':8084/mqtt',{
@@ -265,6 +304,7 @@ function connect(){
    if(topic!==prefix+'/ack')return;
    let a;try{a=JSON.parse(value)}catch{return}
    if(a.id===PRESENCE_ID){applyPresence(a);return}
+   if(a.id===CSI_STATUS_ID){applyRoomSignal(a);return}
    if(!pending||pending.id!==a.id)return;
    const action=pending.action;
    const latency=Math.max(0,Date.now()-(pending.sentAt||Date.now()));
@@ -366,7 +406,7 @@ function init(){
   document.querySelectorAll('.dock-item').forEach(a=>a.addEventListener('click',()=>{
     document.querySelectorAll('.dock-item').forEach(x=>x.classList.toggle('active',x===a));
   }));
-  const sections=['dashboard','monitor','power','schedule','events'].map(id=>$(id));
+  const sections=['dashboard','room','monitor','power','schedule','events'].map(id=>$(id));
   if('IntersectionObserver' in window){
     const obs=new IntersectionObserver(entries=>{
       const visible=entries.filter(e=>e.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
@@ -383,9 +423,10 @@ function init(){
     }
     refreshOverview();
     renderMonitor();
+    renderRoom();
   },5000);
   setInterval(renderCountdown,1000);
-  renderCountdown();updateState();refreshSchedulePreview();renderMonitor();
+  renderCountdown();updateState();refreshSchedulePreview();renderMonitor();renderRoom();
   if(loadConfig())connect();else openSettings(false);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
