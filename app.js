@@ -15,7 +15,7 @@ const ACK_WAIT_MS=13000;
 let mqttClient=null,connected=false,espOnline=false,agentOnline=false;
 let timerSupported=false,shutdownDeadline=null,shutdownKind=null;
 let pending=null,prefix='home/dell7560',delayMinutes=15;
-let eventCounter=0;
+let eventCounter=0,lastStateAt=0,lastAgentHeartbeatAt=0;
 
 const fmtTime=()=>new Date().toLocaleTimeString('vi-VN',{hour12:false});
 function log(level,description){
@@ -31,6 +31,34 @@ function log(level,description){
  $('message').textContent=description;
 }
 function setLed(id,state){$(id).className='led '+(state||'');}
+function refreshOverview(){
+ const head=$('deviceHeadline'),sub=$('deviceSummary'),badge=$('deviceBadge'),light=$('deviceLight');
+ let mode='unknown',title='Chưa xác minh được trạng thái Dell',detail='Chưa có dữ liệu mới từ hệ thống.';
+ if(!connected){mode='offline';title='Cloud chưa kết nối';detail='Kiểm tra mạng hoặc kết nối lại EMQX để điều khiển từ xa.'}
+ else if(agentOnline){mode='online';title='Dell đang hoạt động';detail='Windows Agent đã kết nối, có thể tắt hoặc đặt lịch tắt từ xa.'}
+ else if(espOnline){mode='standby';title='Dell chưa phản hồi';detail='ESP32 đang trực tuyến. Có thể gửi lệnh đánh thức qua Wake-on-LAN.'}
+ else{mode='offline';title='Đang chờ tín hiệu thiết bị';detail='Cloud đã kết nối nhưng chưa xác nhận được trạng thái ESP32 hoặc Dell.'}
+ head.textContent=title;sub.textContent=detail;
+ badge.className='overview-tag mode-'+mode;
+ badge.textContent={online:'ĐANG HOẠT ĐỘNG',standby:'SẴN SÀNG ĐÁNH THỨC',offline:'CHƯA KẾT NỐI',unknown:'CHƯA RÕ'}[mode];
+ light.className='emblem-led mode-'+mode;
+ $('pingAgent').disabled=!connected||Boolean(pending);
+ if(!connected||!lastStateAt){$('lastSync').textContent='Chưa nhận dữ liệu trạng thái';return}
+ const elapsed=Math.max(0,Math.floor((Date.now()-lastStateAt)/1000));
+ $('lastSync').textContent=elapsed<15?'Vừa cập nhật':elapsed<60?'Cập nhật '+elapsed+' giây trước':
+  'Cập nhật '+Math.floor(elapsed/60)+' phút trước';
+}
+function refreshSchedulePreview(){
+ const box=$('schedulePreview');
+ try{
+  const target=chosenTarget();
+  box.classList.remove('preview-error');
+  box.textContent='Dự kiến tắt lúc '+new Date(target*1000).toLocaleString('vi-VN')+
+    ' · Chỉ đặt lịch khi anh nhấn xác nhận.';
+ }catch(e){
+  box.classList.add('preview-error');box.textContent=e.message;
+ }
+}
 function updateState(){
  $('cloudState').textContent=connected?'ONLINE':'OFFLINE';
  $('cloudTop').textContent=connected?'Cloud Connected':'Cloud Disconnected';
@@ -47,6 +75,7 @@ function updateState(){
  $('cancel').hidden=!shutdownDeadline;
  $('cancelStrip').hidden=!shutdownDeadline;
  $('cancelSchedule').hidden=!shutdownDeadline;
+ refreshOverview();
 }
 function setScheduleDeadline(value,kind){
  const target=Number(value);
@@ -79,6 +108,8 @@ function renderCountdown(){
  }
 }
 function applyPresence(packet){
+ lastStateAt=Date.now();
+ lastAgentHeartbeatAt=packet.result==='power_agent_online'?Date.now():0;
  const wasOnline=agentOnline,wasTimerSupported=timerSupported;
  const wasDeadline=shutdownDeadline,wasKind=shutdownKind;
  agentOnline=packet.result==='power_agent_online';
@@ -161,6 +192,7 @@ function connect(){
    if(c!==mqttClient)return;
    const value=data.toString();
    if(topic===prefix+'/status'){
+     lastStateAt=Date.now();
      const online=value==='online';if(online!==espOnline){espOnline=online;updateState();log(online?'success':'warn','ESP32 '+(online?'đang trực tuyến':'đã ngoại tuyến'));}
      return;
    }
@@ -168,7 +200,10 @@ function connect(){
    let a;try{a=JSON.parse(value)}catch{return}
    if(a.id===PRESENCE_ID){applyPresence(a);return}
    if(!pending||pending.id!==a.id)return;
-   const action=pending.action;pending=null;
+   const action=pending.action;
+   const latency=Math.max(0,Date.now()-(pending.sentAt||Date.now()));
+   pending=null;
+   lastStateAt=Date.now();
    if(action==='WAKE')log(a.result==='wol_sent'?'success':'warn',a.result==='wol_sent'?'ESP32 đã gửi Magic Packet. Hãy chờ Dell khởi động.':'Wake: '+a.result);
    else if(action==='SHUTDOWN'||action==='SCHEDULE'){
      if(['shutdown_scheduled','timer_scheduled','shutdown_already_scheduled'].includes(a.result)){
@@ -178,7 +213,11 @@ function connect(){
    }else if(action==='CANCEL'){
      if(a.result==='shutdown_cancelled'){setScheduleDeadline(null,null);log('success','Đã hủy lịch tắt trên Windows');}
      else log('warn','Hủy lịch: '+a.result);
-   }else if(action==='PING')log('success','Windows phản hồi: '+a.result);
+   }else if(action==='PING'){
+     if(a.result==='power_agent_online'){applyPresence(a);
+       log('success','Dell phản hồi trong '+latency+' ms · Windows Agent ONLINE');
+     }else log('warn','Kiểm tra Dell: '+a.result);
+   }
    updateState();
  });
  c.on('reconnect',()=>{if(c!==mqttClient)return;connected=false;espOnline=false;agentOnline=false;timerSupported=false;updateState();log('warn','Đang kết nối lại Cloud...');});
@@ -189,11 +228,11 @@ function connect(){
 function command(action,target){
  if(!mqttClient||!connected||pending)return false;
  if(action==='WAKE'&&!espOnline)return false;
- if(['SHUTDOWN','CANCEL','SCHEDULE','PING'].includes(action)&&!agentOnline)return false;
+ if(['SHUTDOWN','CANCEL','SCHEDULE'].includes(action)&&!agentOnline)return false;
  if(action==='SCHEDULE'&&!timerSupported)return false;
  const now=Math.floor(Date.now()/1000),expiry=now+30,id=randomHex();
  const extra=action==='SCHEDULE'?'|'+target:'';
- pending={id,action};updateState();
+ pending={id,action,sentAt:Date.now()};updateState();
  mqttClient.publish(prefix+'/cmd',action+'|'+expiry+'|'+id+extra,{qos:1,retain:false},err=>{
    if(err&&pending?.id===id){pending=null;updateState();log('error','Gửi lệnh lỗi: '+err.message);}
    else log('info','Đã gửi '+action+' đến EMQX, đang chờ thiết bị xác nhận...');
@@ -239,6 +278,12 @@ function init(){
   $('connect').addEventListener('click',connect);
   $('reconnect').addEventListener('click',()=>{if($('pass').value)connect();else openSettings(false)});
   $('wake').addEventListener('click',()=>command('WAKE'));
+  $('pingAgent').addEventListener('click',()=>{if(!command('PING'))log('warn','Không thể kiểm tra lúc này, hãy chờ lệnh đang xử lý.');});
+  $('copyLog').addEventListener('click',async()=>{
+    const data=Array.from($('log').querySelectorAll('.log-entry')).map(el=>el.innerText.trim()).join('\n');
+    try{await navigator.clipboard.writeText(data);log('success','Đã sao chép nhật ký vào bộ nhớ tạm.')}
+    catch(e){log('warn','Không sao chép tự động được; vui lòng chọn và sao chép nhật ký thủ công.')}
+  });
   $('shutdown').addEventListener('click',shutdownNow);
   $('scheduleBtn').addEventListener('click',schedulePower);
   $('cancel').addEventListener('click',cancelPower);
@@ -247,12 +292,33 @@ function init(){
   document.querySelectorAll('.preset').forEach(btn=>btn.addEventListener('click',()=>{
     delayMinutes=Number(btn.dataset.minutes);
     document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b===btn));
-    $('timeMode').value='delay';$('dateGroup').hidden=true;
+    $('timeMode').value='delay';$('dateGroup').hidden=true;refreshSchedulePreview();
   }));
-  $('timeMode').addEventListener('change',()=>{$('dateGroup').hidden=$('timeMode').value!=='datetime';});
-  $('shutdownAt').addEventListener('change',()=>{});
+  $('timeMode').addEventListener('change',()=>{$('dateGroup').hidden=$('timeMode').value!=='datetime';refreshSchedulePreview();});
+  $('shutdownAt').addEventListener('change',refreshSchedulePreview);
+  $('shutdownAt').addEventListener('input',refreshSchedulePreview);
+  document.querySelectorAll('.dock-item').forEach(a=>a.addEventListener('click',()=>{
+    document.querySelectorAll('.dock-item').forEach(x=>x.classList.toggle('active',x===a));
+  }));
+  const sections=['dashboard','power','schedule','events'].map(id=>$(id));
+  if('IntersectionObserver' in window){
+    const obs=new IntersectionObserver(entries=>{
+      const visible=entries.filter(e=>e.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
+      if(visible)document.querySelectorAll('.dock-item').forEach(a=>
+        a.classList.toggle('active',a.getAttribute('href')==='#'+visible.target.id));
+    },{rootMargin:'-20% 0px -50% 0px',threshold:[0,.15,.4]});
+    sections.forEach(s=>obs.observe(s));
+  }
+  setInterval(()=>{
+    if(agentOnline&&lastAgentHeartbeatAt&&Date.now()-lastAgentHeartbeatAt>75000){
+      agentOnline=false;timerSupported=false;lastAgentHeartbeatAt=0;
+      log('warn','Không nhận heartbeat Windows Agent trong 75 giây.');
+      updateState();
+    }
+    refreshOverview();
+  },5000);
   setInterval(renderCountdown,1000);
-  renderCountdown();updateState();
+  renderCountdown();updateState();refreshSchedulePreview();
   if(loadConfig())connect();else openSettings(false);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
