@@ -96,6 +96,50 @@ function renderMonitor(){
 }
 
 
+
+const BUZZER_STATUS_ID='BBBBBBBBBBBBBBBB';
+let buzzerState=null,buzzerUpdated=0;
+function buzzerReady(){return connected&&espOnline&&buzzerState&&Date.now()-buzzerUpdated<50000}
+function applyBuzzerSignal(v){
+ if(v.result!=='buzzer_status'||v.buzzer_enabled!==true||!Number.isInteger(v.ts)||
+    Math.abs(Date.now()/1000-v.ts)>60)return;
+ const a=v.alarm;
+ if(!a||typeof a.enabled!=='boolean'||typeof a.ringing!=='boolean'||
+ typeof a.time_synced!=='boolean'||!Number.isInteger(a.hour)||a.hour<0||a.hour>23||
+ !Number.isInteger(a.minute)||a.minute<0||a.minute>59||a.zone!=='Asia/Ho_Chi_Minh')return;
+ if(!buzzerState?.ringing&&a.ringing)log('warn','ESP32 đang phát báo thức.');
+ buzzerState=a;buzzerUpdated=Date.now();renderBuzzer();
+}
+function renderBuzzer(){
+ const ready=!!buzzerReady(),a=ready?buzzerState:null;
+ const badge=$('buzzerCloudState');
+ badge.className='buzzer-ready '+(ready?'ready':connected&&espOnline?'bad':'');
+ badge.textContent=ready?'CÒI ONLINE':connected&&espOnline?'CHỜ FIRMWARE':'CHƯA KẾT NỐI';
+ $('buzzerActivity').textContent=!a?'Chưa xác nhận':a.ringing?'ĐANG BÁO THỨC':'Sẵn sàng';
+ $('buzzerAlarmTime').textContent=!a?'--':a.enabled?String(a.hour).padStart(2,'0')+':'+String(a.minute).padStart(2,'0'):'Đã tắt';
+ $('buzzerClockSync').textContent=!a?'--':a.time_synced?'Đã đồng bộ':'Chờ đồng bộ';
+ if(a&&a.enabled&&document.activeElement!==$('buzzerTime'))
+   $('buzzerTime').value=String(a.hour).padStart(2,'0')+':'+String(a.minute).padStart(2,'0');
+ $('buzzerTest').disabled=!ready||!!pending;
+ $('buzzerSet').disabled=!ready||!a.time_synced||!!pending;
+ $('buzzerDisable').disabled=!ready||!a.enabled||!!pending;
+ $('buzzerStop').disabled=!ready||!!pending;
+ $('buzzerRefresh').disabled=!connected||!espOnline||!!pending;
+ if(!a)$('buzzerFeedback').textContent=connected&&espOnline?
+  'Đang chờ trạng thái còi từ ESP32. Firmware cũ không hỗ trợ nút điều khiển này.':
+  'Cần kết nối EMQX và ESP32 để điều khiển còi.';
+}
+function buzzerAction(action){
+ if(action!=='ALARM_STATUS'&&!buzzerReady()){log('warn','Chưa có phản hồi chức năng còi');return}
+ if(action==='ALARM_SET'){
+  const t=$('buzzerTime').value;
+  if(!/^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(t)){log('warn','Giờ báo thức không hợp lệ');return}
+  ask('Đặt báo thức hằng ngày?','ESP32 sẽ kêu mỗi ngày lúc '+t+
+  ' theo giờ Việt Nam và tự ngắt sau 45 giây.',()=>command('ALARM_SET',t.replace(':','')));
+  return;
+ }
+ command(action);
+}
 const CSI_STATUS_ID='CCCCCCCCCCCCCCCC';
 let roomData=null,lastCsiSeq=-1;
 const CSI_TTL_SECONDS=45;
@@ -192,6 +236,7 @@ function updateState(){
  $('espState').textContent=espOnline?'ONLINE':'OFFLINE';setLed('espDot',espOnline?'ok':'bad');
  $('pcState').textContent=agentOnline?'ONLINE':'OFFLINE';setLed('pcDot',agentOnline?'ok':'bad');
  $('wake').disabled=!(connected&&espOnline)||Boolean(pending);
+ renderBuzzer();
  $('shutdown').disabled=!(connected&&agentOnline)||Boolean(pending)||Boolean(shutdownDeadline);
  $('scheduleBtn').disabled=!(connected&&agentOnline&&timerSupported)||Boolean(pending)||Boolean(shutdownDeadline);
  $('cancel').disabled=!(connected&&agentOnline)||Boolean(pending);
@@ -298,6 +343,7 @@ function connect(){
  saveConfig(cfg);if(mqttClient){try{mqttClient.end(true)}catch{}}
  connected=false;espOnline=false;agentOnline=false;timerSupported=false;
  roomData=null;lastCsiSeq=-1;renderRoom();
+ buzzerState=null;buzzerUpdated=0;renderBuzzer();
  pending=null;prefix=cfg.topic;updateState();
  log('info','Đang kết nối EMQX Cloud qua WSS/TLS...');
  const c=mqtt.connect('wss://'+cfg.host+':8084/mqtt',{
@@ -327,12 +373,23 @@ function connect(){
    let a;try{a=JSON.parse(value)}catch{return}
    if(a.id===PRESENCE_ID){applyPresence(a);return}
    if(a.id===CSI_STATUS_ID){applyRoomSignal(a);return}
+   if(a.id===BUZZER_STATUS_ID){applyBuzzerSignal(a);return}
    if(!pending||pending.id!==a.id)return;
    const action=pending.action;
    const latency=Math.max(0,Date.now()-(pending.sentAt||Date.now()));
    pending=null;
    lastStateAt=Date.now();
    if(action==='WAKE')log(a.result==='wol_sent'?'success':'warn',a.result==='wol_sent'?'ESP32 đã gửi Magic Packet. Hãy chờ Dell khởi động.':'Wake: '+a.result);
+   else if(['BEEP','ALARM_SET','ALARM_OFF','ALARM_STOP','ALARM_STATUS'].includes(action)){
+     const success=['beep_queued','alarm_saved','alarm_disabled','alarm_stopped','alarm_status_ok'].includes(a.result);
+     const messages={beep_queued:'ESP32 đã xếp lệnh bíp',alarm_saved:'ESP32 đã lưu lịch báo thức',
+      alarm_disabled:'ESP32 đã tắt lịch báo thức',alarm_stopped:'Đã gửi lệnh dừng còi',
+      alarm_status_ok:'Đã yêu cầu đồng bộ trạng thái còi'};
+     const message=messages[a.result]||'Điều khiển còi: '+String(a.result).slice(0,50);
+     $('buzzerFeedback').textContent=message;
+     $('buzzerFeedback').className='buzzer-feedback'+(success?'':' err');
+     log(success?'success':'warn',message);
+   }
    else if(action==='SHUTDOWN'||action==='SCHEDULE'){
      if(['shutdown_scheduled','timer_scheduled','shutdown_already_scheduled'].includes(a.result)){
        if(Number.isInteger(a.scheduled_for))setScheduleDeadline(a.scheduled_for,action==='SHUTDOWN'?'now':'timer');
@@ -356,10 +413,12 @@ function connect(){
 function command(action,target){
  if(!mqttClient||!connected||pending)return false;
  if(action==='WAKE'&&!espOnline)return false;
+ if(['BEEP','ALARM_SET','ALARM_OFF','ALARM_STOP','ALARM_STATUS'].includes(action)
+ &&(!espOnline||(action!=='ALARM_STATUS'&&!buzzerReady())))return false;
  if(['SHUTDOWN','CANCEL','SCHEDULE'].includes(action)&&!agentOnline)return false;
  if(action==='SCHEDULE'&&!timerSupported)return false;
  const now=Math.floor(Date.now()/1000),expiry=now+30,id=randomHex();
- const extra=action==='SCHEDULE'?'|'+target:'';
+ const extra=(action==='SCHEDULE'||action==='ALARM_SET')?'|'+target:'';
  pending={id,action,sentAt:Date.now()};updateState();
  mqttClient.publish(prefix+'/cmd',action+'|'+expiry+'|'+id+extra,{qos:1,retain:false},err=>{
    if(err&&pending?.id===id){pending=null;updateState();log('error','Gửi lệnh lỗi: '+err.message);}
@@ -406,6 +465,11 @@ function init(){
   $('connect').addEventListener('click',connect);
   $('reconnect').addEventListener('click',()=>{if($('pass').value)connect();else openSettings(false)});
   $('wake').addEventListener('click',()=>command('WAKE'));
+  $('buzzerTest').addEventListener('click',()=>buzzerAction('BEEP'));
+  $('buzzerSet').addEventListener('click',()=>buzzerAction('ALARM_SET'));
+  $('buzzerStop').addEventListener('click',()=>buzzerAction('ALARM_STOP'));
+  $('buzzerDisable').addEventListener('click',()=>buzzerAction('ALARM_OFF'));
+  $('buzzerRefresh').addEventListener('click',()=>buzzerAction('ALARM_STATUS'));
   $('pingAgent').addEventListener('click',()=>{if(!command('PING'))log('warn','Không thể kiểm tra lúc này, hãy chờ lệnh đang xử lý.');});
   $('copyLog').addEventListener('click',async()=>{
     const data=Array.from($('log').querySelectorAll('.log-entry')).map(el=>el.innerText.trim()).join('\n');
@@ -428,7 +492,7 @@ function init(){
   document.querySelectorAll('.dock-item').forEach(a=>a.addEventListener('click',()=>{
     document.querySelectorAll('.dock-item').forEach(x=>x.classList.toggle('active',x===a));
   }));
-  const sections=['dashboard','room','monitor','power','schedule','events'].map(id=>$(id));
+  const sections=['dashboard','room','buzzer','monitor','power','schedule','events'].map(id=>$(id));
   if('IntersectionObserver' in window){
     const obs=new IntersectionObserver(entries=>{
       const visible=entries.filter(e=>e.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
@@ -446,9 +510,10 @@ function init(){
     refreshOverview();
     renderMonitor();
     renderRoom();
+    renderBuzzer();
   },5000);
   setInterval(renderCountdown,1000);
-  renderCountdown();updateState();refreshSchedulePreview();renderMonitor();renderRoom();
+  renderCountdown();updateState();refreshSchedulePreview();renderMonitor();renderRoom();renderBuzzer();
   if(loadConfig())connect();else openSettings(false);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
