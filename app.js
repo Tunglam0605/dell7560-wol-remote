@@ -111,7 +111,15 @@ function applyRoomSignal(packet){
  if(roomData&&seq<lastCsiSeq&&ts<=roomData.ts)return; // old telemetry
  const micro=Number.isInteger(packet.micro_score)&&packet.micro_score>=0&&packet.micro_score<100000000?packet.micro_score:null;
  const rate=Number.isInteger(packet.rate_x10)&&packet.rate_x10>=0&&packet.rate_x10<=2000?packet.rate_x10:null;
- roomData={ts,seq,state:packet.state,samples,rssi:packet.rssi,score:packet.score,micro,rate};
+ const periodValid=packet.periodic_valid===true &&
+ Number.isInteger(packet.periodic_quality_pct)&&packet.periodic_quality_pct>=0&&packet.periodic_quality_pct<=100 &&
+ Number.isInteger(packet.periodic_cpm_x10)&&packet.periodic_cpm_x10>=72&&packet.periodic_cpm_x10<=288 &&
+ Number.isInteger(packet.periodic_window_sec)&&packet.periodic_window_sec>=60&&packet.periodic_window_sec<=120 &&
+ Number.isInteger(packet.periodic_samples)&&packet.periodic_samples>=450&&packet.periodic_samples<=1680;
+ roomData={ts,seq,state:packet.state,samples,rssi:packet.rssi,score:packet.score,micro,rate,
+           periodValid,quality:periodValid?packet.periodic_quality_pct:null,
+           cpm:periodValid?packet.periodic_cpm_x10:null,
+           windowSec:periodValid?packet.periodic_window_sec:null};
  lastCsiSeq=seq;
  renderRoom();
 }
@@ -134,6 +142,15 @@ function renderRoom(){
  $('roomScore').textContent=recent?(roomData.score/100).toFixed(2):'--';
  $('roomMicro').textContent=recent&&roomData.micro!==null?(roomData.micro/100).toFixed(2):'--';
  $('roomRate').textContent=recent&&roomData.rate!==null?(roomData.rate/10).toFixed(1)+' Hz':'--';
+ const periodic=recent&&roomData.periodValid;
+ $('roomPeriodQuality').textContent=periodic?roomData.quality+'%':'--';
+ $('roomPeriodCpm').textContent=periodic?(roomData.cpm/10).toFixed(1)+' chu kỳ/phút':'--';
+ $('roomPeriodWindow').textContent=periodic?roomData.windowSec+' giây':'--';
+ $('roomPeriodState').textContent=periodic?'ĐÃ PHÂN TÍCH':'CHỜ DỮ LIỆU 60–120 GIÂY';
+ $('roomPeriodState').className='periodic-signal '+(periodic?'ready':'');
+ $('roomPeriodNote').textContent=periodic?
+  'Độ khớp '+roomData.quality+'% là phần biến thiên RF khớp với mô hình tuần hoàn, KHÔNG phải độ tin cậy phát hiện người hay nhịp thở.':
+  'Chưa có đủ dữ liệu hợp lệ. Chỉ số RF không xác nhận trong phòng có người hay không.';
  $('roomTimestamp').textContent=recent?
   'Bản tin '+Math.max(0,Math.floor(Date.now()/1000-roomData.ts))+' giây trước':'Chưa nhận bản tin hợp lệ trong 45 giây';
 }
