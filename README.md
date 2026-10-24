@@ -57,3 +57,13 @@ The existing ESP32 WROOM-32 can collect Wi-Fi Channel State Information (CSI) fr
 - A live supervised OTA ran successfully. 24 unlabeled CSI observations averaged **11.02 Hz**, no queue drops, and all reported \`QUIET_SIGNAL\`.
 - **No sleeping-person identification was proven.** A CSI variation could be caused by multipath/noise; a stable CSI reading does **not** imply that nobody is in the room. No heart/breath signal is reported or inferred.
 - Firmware and full raw logs remain on the owner’s private Dell workspace; no Wi-Fi/MQTT secrets or firmware images are placed in this public repository.
+
+## v4.4 — Long-window RF periodicity experiment
+
+- The existing **single ESP32-WROOM-32** analyzes six normalized Wi-Fi CSI subcarrier features in a bounded, static ring buffer.
+- A 60–120-second sinusoidal frequency scan estimates RF spectral-fit percentage and a diagnostic RF cycle frequency. **These are not breath rate, occupancy confidence, or a declaration that someone is in the room.**
+- Safe display: low spectral fit (<10%, a display heuristic only) hides an apparent frequency rather than implying a detected human vital sign.
+- Supervised OTA was deployed successfully, with device Wi-Fi/MQTT confirmed online; approximate free heap 126 KiB. The non-destructive WOL endpoint acknowledged a request while the Dell was already ON, not an actual S5 wake trial.
+- Synthetic C tests passed 7/7. A **150-second UNLABELED** real-world capture contained 30/30 QUIET_SIGNAL observations, with spectral fit **0–1%**, mean **0.73%**. No reliable sleeper presence was identified.
+- An **EMPTY_CONFIRMED** room baseline has **not** yet been recorded; it requires current confirmation that the room is empty. No claim of classification accuracy can be made yet.
+- Source firmware and labeled/unlabeled measurement CSVs remain private on the Windows workstation, not in this GitHub Pages repository.
