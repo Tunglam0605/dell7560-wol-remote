@@ -357,3 +357,10 @@ body{background:radial-gradient(ellipse 620px 400px at 58% -12%,rgba(48,112,191,
 @keyframes csi-pulse{0%,100%{opacity:.3}50%{opacity:1}}
 @media(max-width:760px){.room-panel{padding:16px 12px;border-radius:16px;margin-bottom:11px}.room-header{align-items:flex-start;margin-bottom:13px}.room-header h2{font-size:19px}.room-header p{font-size:11px}.room-live{font-size:8px;padding:7px 8px;max-width:110px;text-align:center}.room-content{grid-template-columns:84px minmax(0,1fr);gap:12px;align-items:center}.room-orbit{width:80px;height:80px}.room-orbit-lines{width:65px;height:65px}.room-orbit-lines:after{inset:10px}.room-orbit-core{width:34px;height:34px;border-radius:11px;font-size:24px}.room-orbit-dot{top:14px;right:6px;width:6px;height:6px}.room-state{font-size:18px}.room-interpretation{font-size:11px;line-height:1.5}.room-stats{gap:6px}.room-stats>span{font-size:10px;padding:7px;gap:6px}.room-stats strong{font-size:10px}.room-foot{font-size:9px}.mobile-dock{grid-template-columns:repeat(6,minmax(0,1fr))}.dock-item small{font-size:7px}.dock-item span{font-size:18px}}
 @media(max-width:360px){.room-header{flex-direction:column;gap:7px}.room-live{max-width:none}.room-content{grid-template-columns:1fr}.room-orbit{display:none}.room-state{font-size:18px}.mobile-dock{left:4px;right:4px;padding:5px 2px}.dock-item small{font-size:6.5px}}
+
+/* v4.3 · single-ESP32 CSI subcarrier experiments */
+.room-panel[data-room-state=micro_variation]{border-color:rgba(76,206,241,.42)}
+.room-panel[data-room-state=micro_variation] .room-live{color:var(--cyan);border-color:rgba(76,206,241,.45);background:rgba(76,206,241,.10)}
+.room-panel[data-room-state=micro_variation] .room-orbit-dot{background:var(--cyan);opacity:1;animation:csi-pulse 2.1s infinite}
+.room-stats strong{white-space:nowrap}
+@media(max-width:760px){.room-stats>span{flex:1 1 auto;justify-content:space-between}.room-analysis{width:100%}}
