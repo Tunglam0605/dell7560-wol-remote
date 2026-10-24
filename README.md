@@ -37,3 +37,14 @@ EMQX Cloud
 Desktop/mobile layouts and UI command flows are tested with a mock MQTT client, without issuing real Shutdown/Restart commands. The Windows Agent's logic is separately unit-tested. **Live end-to-end telemetry and actual physical Wake/Shutdown require acceptance testing on the user's network and hardware.**
 
 To use this deployment, connect on the published GitHub Pages URL and enter the MQTT password for the phone principal.
+
+## Experimental Wi-Fi CSI room monitor (v4.2)
+
+The existing ESP32 WROOM-32 can collect Wi-Fi Channel State Information (CSI) from the home router, which is physically ~4–5 m away in the same room.
+
+- `Giám sát phòng` displays **CALIBRATING**, **MOVEMENT_CANDIDATE**, **QUIET_SIGNAL** or **UNKNOWN** with packet count, RSSI and a diagnostic variation score.
+- ESP32 sends a short, non-retained JSON message every ~10 seconds over the existing `home/dell7560/ack` MQTT topic with `id=CCCCCCCCCCCCCCCC` and `result=csi_sample`.
+- The dashboard rejects stale or malformed messages and expires measurements after 45 seconds.
+- A local-only diagnostic endpoint `GET /api/csi` on the ESP32 provides aggregate CSI status; it does not expose raw CSI data, router identifiers or MAC addresses.
+- The integrated firmware was deployed by supervised LAN OTA on 2026-10-24; Wi-Fi/MQTT resumed, local CSI metrics were observed, and the LAN Wake endpoint still acknowledged a request.
+- **Important:** This is a movement *candidate* indicator. `QUIET_SIGNAL` does not prove an empty room. There are no validated occupancy accuracy claims. True sitting-still/breathing presence detection may require an mmWave sensor or more extensive CSI calibration.
