@@ -4,32 +4,32 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0d1525">
-  <meta name="description" content="TÃ¹ng LÃ¢m Automation Â· Dell Precision 7560 remote power control">
-  <title>Dell Remote Power | TÃ¹ng LÃ¢m Automation</title>
+  <meta name="description" content="Tùng Lâm Automation · Dell Precision 7560 remote power control">
+  <title>Dell Remote Power | Tùng Lâm Automation</title>
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo.png">
-  <link rel="stylesheet" href="./ui.css?v=3">
+  <link rel="stylesheet" href="./ui.css?v=4">
 </head>
 <body>
 <div class="app-shell">
-  <aside class="sidebar" aria-label="Äiá»u hÆ°á»›ng">
+  <aside class="sidebar" aria-label="Điều hướng">
     <div class="brand-lockup">
-      <img class="brand-logo" src="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo-background.png" alt="TÃ¹ng LÃ¢m Automation">
-      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v2.0</span></div>
+      <img class="brand-logo" src="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo-background.png" alt="Tùng Lâm Automation">
+      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v3.1</span></div>
     </div>
-    <div class="nav-label">Há»† THá»NG</div>
-    <nav class="nav-links" aria-label="CÃ¡c khu vá»±c">
-      <a class="nav-item active" href="#dashboard"><span class="nav-icon">â–¦</span> Tá»•ng quan</a>
-      <a class="nav-item" href="#power"><span class="nav-icon">â»</span> Äiá»u khiá»ƒn nguá»“n</a>
-      <a class="nav-item" href="#schedule"><span class="nav-icon">â—·</span> Lá»‹ch táº¯t mÃ¡y</a>
-      <a class="nav-item" href="#events"><span class="nav-icon">â–¤</span> Nháº­t kÃ½</a>
+    <div class="nav-label">HỆ THỐNG</div>
+    <nav class="nav-links" aria-label="Các khu vực">
+      <a class="nav-item active" href="#dashboard"><span class="nav-icon">▦</span> Tổng quan</a>
+      <a class="nav-item" href="#power"><span class="nav-icon">⏻</span> Điều khiển nguồn</a>
+      <a class="nav-item" href="#schedule"><span class="nav-icon">◷</span> Lịch tắt máy</a>
+      <a class="nav-item" href="#events"><span class="nav-icon">▤</span> Nhật ký</a>
     </nav>
     <div class="sidebar-foot">
-      <div class="status-mini"><span id="sideDot" class="led"></span><div><small>EMQX CLOUD</small><b id="sidebarCloud">ChÆ°a káº¿t ná»‘i</b></div></div>
+      <div class="status-mini"><span id="sideDot" class="led"></span><div><small>EMQX CLOUD</small><b id="sidebarCloud">Chưa kết nối</b></div></div>
       <div class="foot-actions">
-        <button class="theme-btn" id="themeToggle" type="button" aria-label="Chuyá»ƒn giao diá»‡n sÃ¡ng/tá»‘i" title="Chuyá»ƒn giao diá»‡n sÃ¡ng/tá»‘i">â— <span>Giao diá»‡n</span></button>
-        <button class="theme-btn" id="configOpen" type="button" aria-label="Má»Ÿ cáº¥u hÃ¬nh MQTT">âš™ <span>Cáº¥u hÃ¬nh</span></button>
+        <button class="theme-btn" id="themeToggle" type="button" aria-label="Chuyển giao diện sáng/tối" title="Chuyển giao diện sáng/tối">◐ <span>Giao diện</span></button>
+        <button class="theme-btn" id="configOpen" type="button" aria-label="Mở cấu hình MQTT">⚙ <span>Cấu hình</span></button>
       </div>
-      <small class="copyright">Â© 2026 TÃ™NG LÃ‚M AUTOMATION</small>
+      <small class="copyright">© 2026 TÙNG LÂM AUTOMATION</small>
     </div>
   </aside>
 
@@ -37,74 +37,75 @@
     <header class="topbar">
       <div class="breadcrumb"><span>TUNGLAM AUTOMATION</span><span class="slash">/</span><b>REMOTE CONTROL</b></div>
       <div class="topbar-actions">
-        <span class="pill" id="cloudPill"><i class="led"></i><span id="cloudTop">Cloud chÆ°a káº¿t ná»‘i</span></span>
-        <button class="icon-button" id="reconnect" type="button" title="Káº¿t ná»‘i láº¡i MQTT" aria-label="Káº¿t ná»‘i láº¡i MQTT">âŸ³</button>
-        <button class="icon-button mobile-theme" id="themeMobile" type="button" title="Äá»•i giao diá»‡n">â—</button>
+        <span class="pill" id="cloudPill"><i class="led"></i><span id="cloudTop">Cloud chưa kết nối</span></span>
+        <button class="icon-button" id="reconnect" type="button" title="Kết nối lại MQTT" aria-label="Kết nối lại MQTT">⟳</button>
+        <button class="icon-button mobile-theme" id="themeMobile" type="button" title="Đổi giao diện">◐</button>
       </div>
     </header>
 
     <section class="hero">
       <div>
-        <div class="eyebrow">â—ˆ SECURE REMOTE POWER MANAGEMENT</div>
-        <h1>Äiá»u khiá»ƒn <span class="gradient-text">Dell Precision 7560</span></h1>
-        <p>Báº­t mÃ¡y qua Wake-on-LAN, táº¯t tá»« xa vÃ  thiáº¿t láº­p lá»‹ch táº¯t an toÃ n â€” má»i nÆ¡i qua MQTT/TLS.</p>
+        <div class="eyebrow">◈ SECURE REMOTE POWER MANAGEMENT</div>
+        <h1>Điều khiển <span class="gradient-text">Dell Precision 7560</span></h1>
+        <p>Bật máy qua Wake-on-LAN, tắt từ xa và thiết lập lịch tắt an toàn — mọi nơi qua MQTT/TLS.</p>
       </div>
-      <div class="hero-device" aria-hidden="true"><div class="hero-ring"><span>â»</span></div><small>PRECISION / 7560</small></div>
+      <div class="hero-device" aria-hidden="true"><div class="hero-ring"><span>⏻</span></div><small>PRECISION / 7560</small></div>
     </section>
 
-    <section class="metrics" aria-label="Tráº¡ng thÃ¡i há»‡ thá»‘ng">
-      <article class="stat-card"><div class="metric-top"><span>MQTT CLOUD</span><span class="metric-icon cyan">â˜</span></div><strong id="cloudState">OFFLINE</strong><div class="metric-sub"><i id="cloudDot" class="led"></i><span>Káº¿t ná»‘i WebSocket TLS</span></div></article>
-      <article class="stat-card"><div class="metric-top"><span>ESP32 GATEWAY</span><span class="metric-icon mint">â–£</span></div><strong id="espState">CHÆ¯A RÃ•</strong><div class="metric-sub"><i id="espDot" class="led"></i><span>Magic Packet / WOL</span></div></article>
-      <article class="stat-card"><div class="metric-top"><span>WINDOWS AGENT</span><span class="metric-icon blue">â–¤</span></div><strong id="pcState">CHÆ¯A RÃ•</strong><div class="metric-sub"><i id="pcDot" class="led"></i><span>Nháº­n lá»‡nh &amp; háº¹n giá»</span></div></article>
-      <article class="stat-card"><div class="metric-top"><span>Lá»ŠCH Táº®T MÃY</span><span class="metric-icon amber">â—·</span></div><strong id="timerState">CHÆ¯A Äáº¶T</strong><div class="metric-sub"><i id="timerDot" class="led"></i><span id="timerSummary">KhÃ´ng cÃ³ lá»‹ch Ä‘ang cháº¡y</span></div></article>
+    <section class="metrics" aria-label="Trạng thái hệ thống">
+      <article class="stat-card"><div class="metric-top"><span>MQTT CLOUD</span><span class="metric-icon cyan">☁</span></div><strong id="cloudState">OFFLINE</strong><div class="metric-sub"><i id="cloudDot" class="led"></i><span>Kết nối WebSocket TLS</span></div></article>
+      <article class="stat-card"><div class="metric-top"><span>ESP32 GATEWAY</span><span class="metric-icon mint">▣</span></div><strong id="espState">CHƯA RÕ</strong><div class="metric-sub"><i id="espDot" class="led"></i><span>Magic Packet / WOL</span></div></article>
+      <article class="stat-card"><div class="metric-top"><span>WINDOWS AGENT</span><span class="metric-icon blue">▤</span></div><strong id="pcState">CHƯA RÕ</strong><div class="metric-sub"><i id="pcDot" class="led"></i><span>Nhận lệnh &amp; hẹn giờ</span></div></article>
+      <article class="stat-card"><div class="metric-top"><span>LỊCH TẮT MÁY</span><span class="metric-icon amber">◷</span></div><strong id="timerState">CHƯA ĐẶT</strong><div class="metric-sub"><i id="timerDot" class="led"></i><span id="timerSummary">Không có lịch đang chạy</span></div></article>
     </section>
 
     <div class="main-grid">
       <section id="power" class="panel power-panel">
-        <div class="panel-heading"><div><div class="eyebrow">POWER MANAGEMENT</div><h2>Äiá»u khiá»ƒn nguá»“n</h2><p>Lá»‡nh Ä‘Æ°á»£c gá»­i qua EMQX vÃ  xÃ¡c nháº­n bá»Ÿi thiáº¿t bá»‹ Ä‘Ã­ch.</p></div><span class="section-icon">âš¡</span></div>
+        <div class="panel-heading"><div><div class="eyebrow">POWER MANAGEMENT</div><h2>Điều khiển nguồn</h2><p>Lệnh được gửi qua EMQX và xác nhận bởi thiết bị đích.</p></div><span class="section-icon">⚡</span></div>
         <div class="power-actions">
-          <div class="action-tile action-start"><div class="tile-badge mint">WOL Â· ESP32</div><div class="tile-icon">â»</div><h3>Báº­t Dell tá»« xa</h3><p>DÃ nh cho tráº¡ng thÃ¡i Shutdown S5. ESP32 phÃ¡t Magic Packet qua LAN.</p><button id="wake" class="btn btn-primary" type="button" disabled>â» &nbsp; ÄÃ¡nh thá»©c Dell <span>â†’</span></button></div>
-          <div class="action-tile action-stop"><div class="tile-badge coral">WINDOWS Â· POWER</div><div class="tile-icon">â¼</div><h3>Táº¯t Dell an toÃ n</h3><p>XÃ¡c nháº­n trÆ°á»›c khi thá»±c hiá»‡n. CÃ³ 45 giÃ¢y Ä‘á»ƒ há»§y lá»‡nh.</p><button id="shutdown" class="btn btn-danger" type="button" disabled>â¼ &nbsp; Táº¯t mÃ¡y tá»« xa <span>â†’</span></button></div>
+          <div class="action-tile action-start"><div class="tile-badge mint">WOL · ESP32</div><div class="tile-icon">⏻</div><h3>Bật Dell từ xa</h3><p>Dành cho trạng thái Shutdown S5. ESP32 phát Magic Packet qua LAN.</p><button id="wake" class="btn btn-primary" type="button" disabled>⏻ &nbsp; Đánh thức Dell <span>→</span></button></div>
+          <div class="action-tile action-stop"><div class="tile-badge coral">WINDOWS · POWER</div><div class="tile-icon">⏼</div><h3>Tắt Dell an toàn</h3><p>Xác nhận trước khi thực hiện. Có 45 giây để hủy lệnh.</p><button id="shutdown" class="btn btn-danger" type="button" disabled>⏼ &nbsp; Tắt máy từ xa <span>→</span></button></div>
         </div>
-        <div class="cancel-strip" id="cancelStrip" hidden><span><i class="led warn"></i><b>Äang chá» táº¯t mÃ¡y</b> â€” cÃ³ thá»ƒ há»§y trÆ°á»›c khi háº¿t háº¡n</span><button type="button" class="btn btn-outline btn-sm" id="cancel" disabled>Há»§y lá»‡nh táº¯t â†©</button></div>
+        <div class="cancel-strip" id="cancelStrip" hidden><span><i class="led warn"></i><b>Đang chờ tắt máy</b> — có thể hủy trước khi hết hạn</span><button type="button" class="btn btn-outline btn-sm" id="cancel" disabled>Hủy lệnh tắt ↩</button></div>
       </section>
 
       <section id="schedule" class="panel schedule-panel">
-        <div class="panel-heading"><div><div class="eyebrow">AUTOMATION / TIMER</div><h2>Háº¹n giá» táº¯t mÃ¡y</h2><p>Lá»‹ch cháº¡y táº¡i Windows, khÃ´ng phá»¥ thuá»™c Ä‘iá»‡n thoáº¡i.</p></div><span class="section-icon">â—·</span></div>
-        <div class="timer-display"><small id="timerDisplayLabel">TRáº NG THÃI Lá»ŠCH Táº®T</small><strong id="countdown">-- : -- : --</strong><span id="scheduleWhen">ChÆ°a cÃ³ lá»‹ch táº¯t mÃ¡y</span></div>
-        <div class="field-group"><label for="delayPreset">Táº¯t sau khoáº£ng thá»i gian</label><div class="preset-grid">
-          <button type="button" class="preset active" data-minutes="15">15 <small>phÃºt</small></button>
-          <button type="button" class="preset" data-minutes="30">30 <small>phÃºt</small></button>
-          <button type="button" class="preset" data-minutes="60">1 <small>giá»</small></button>
-          <button type="button" class="preset" data-minutes="120">2 <small>giá»</small></button>
+        <div class="panel-heading"><div><div class="eyebrow">AUTOMATION / TIMER</div><h2>Hẹn giờ tắt máy</h2><p>Lịch chạy tại Windows, không phụ thuộc điện thoại.</p></div><span class="section-icon">◷</span></div>
+        <div class="timer-display"><small id="timerDisplayLabel">TRẠNG THÁI LỊCH TẮT</small><strong id="countdown">-- : -- : --</strong><span id="scheduleWhen">Chưa có lịch tắt máy</span></div>
+        <div class="field-group"><label for="delayPreset">Tắt sau khoảng thời gian</label><div class="preset-grid">
+          <button type="button" class="preset active" data-minutes="15">15 <small>phút</small></button>
+          <button type="button" class="preset" data-minutes="30">30 <small>phút</small></button>
+          <button type="button" class="preset" data-minutes="60">1 <small>giờ</small></button>
+          <button type="button" class="preset" data-minutes="120">2 <small>giờ</small></button>
         </div></div>
-        <div class="field-group"><label for="timeMode">Kiá»ƒu Ä‘áº·t lá»‹ch</label><select id="timeMode"><option value="delay">Sau khoáº£ng thá»i gian Ä‘Ã£ chá»n</option><option value="datetime">Táº¡i ngÃ y vÃ  giá» cá»¥ thá»ƒ</option></select></div>
-        <div class="field-group" id="dateGroup" hidden><label for="shutdownAt">NgÃ y / giá» táº¯t (theo mÃºi giá» Ä‘iá»‡n thoáº¡i)</label><input id="shutdownAt" type="datetime-local" step="60"/></div>
-        <button type="button" class="btn btn-schedule" id="scheduleBtn" disabled>â—· &nbsp; XÃ¡c nháº­n háº¹n giá» <span>â†’</span></button>
-        <button type="button" class="btn btn-ghost" id="cancelSchedule" hidden disabled>âœ• &nbsp; Há»§y lá»‹ch Ä‘ang cháº¡y</button>
-        <p class="hint">Pháº¡m vi: tá»« 2 phÃºt Ä‘áº¿n 24 giá». KhÃ´ng táº¯t cÆ°á»¡ng bá»©c á»©ng dá»¥ng chÆ°a lÆ°u. Náº¿u Dell khÃ´ng cÃ²n má»Ÿ, khÃ´ng thá»ƒ lÃªn lá»‹ch má»›i.</p>
+        <div class="field-group"><label for="timeMode">Kiểu đặt lịch</label><select id="timeMode"><option value="delay">Sau khoảng thời gian đã chọn</option><option value="datetime">Tại ngày và giờ cụ thể</option></select></div>
+        <div class="field-group" id="dateGroup" hidden><label for="shutdownAt">Ngày / giờ tắt (theo múi giờ điện thoại)</label><input id="shutdownAt" type="datetime-local" step="60"/></div>
+        <button type="button" class="btn btn-schedule" id="scheduleBtn" disabled>◷ &nbsp; Xác nhận hẹn giờ <span>→</span></button>
+        <button type="button" class="btn btn-ghost" id="cancelSchedule" hidden disabled>✕ &nbsp; Hủy lịch đang chạy</button>
+        <p class="hint">Phạm vi: từ 2 phút đến 24 giờ. Không tắt cưỡng bức ứng dụng chưa lưu. Nếu Dell không còn mở, không thể lên lịch mới.</p>
       </section>
     </div>
 
-    <section class="panel events-panel" id="events"><div class="panel-heading"><div><div class="eyebrow">EVENT TELEMETRY</div><h2>Nháº­t kÃ½ Ä‘iá»u khiá»ƒn</h2></div><button type="button" class="btn btn-outline btn-sm" id="clearLog">XÃ³a nháº­t kÃ½</button></div>
-      <div id="log" class="log-console" role="log" aria-live="polite"><div class="log-entry"><time>--:--:--</time><span class="log-info">[SYSTEM]</span>Äang chá» káº¿t ná»‘i EMQX Cloud...</div></div>
+    <section class="panel events-panel" id="events"><div class="panel-heading"><div><div class="eyebrow">EVENT TELEMETRY</div><h2>Nhật ký điều khiển</h2></div><button type="button" class="btn btn-outline btn-sm" id="clearLog">Xóa nhật ký</button></div>
+      <div id="log" class="log-console" role="log" aria-live="polite"><div class="log-entry"><time>--:--:--</time><span class="log-info">[SYSTEM]</span>Đang chờ kết nối EMQX Cloud...</div></div>
       <div id="message" class="sr-status" aria-live="polite"></div>
     </section>
-    <footer class="footer"><span><i class="led ok"></i> TUNG LAM AUTOMATION Â· ENGINEERED FOR RELIABILITY</span><span>MQTT/TLS 8883 &nbsp; / &nbsp; WSS 8084 &nbsp; / &nbsp; ESP32 WOL</span></footer>
+    <footer class="footer"><span><i class="led ok"></i> TUNG LAM AUTOMATION · ENGINEERED FOR RELIABILITY</span><span>MQTT/TLS 8883 &nbsp; / &nbsp; WSS 8084 &nbsp; / &nbsp; ESP32 WOL</span></footer>
   </main>
 </div>
 
-<dialog class="gw-modal" id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog" class="modal-body"><div class="modal-eyebrow">TUNGLAM Â· SECURITY CONFIRMATION</div><h2 id="confirmTitle">XÃ¡c nháº­n thao tÃ¡c</h2><p id="confirmText"></p><div class="modal-actions"><button class="btn btn-outline" id="confirmNo" value="cancel">Há»§y bá»</button><button class="btn btn-danger" id="confirmYes" value="confirm">XÃ¡c nháº­n thá»±c hiá»‡n</button></div></form></dialog>
+<dialog class="gw-modal" id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog" class="modal-body"><div class="modal-eyebrow">TUNGLAM · SECURITY CONFIRMATION</div><h2 id="confirmTitle">Xác nhận thao tác</h2><p id="confirmText"></p><div class="modal-actions"><button class="btn btn-outline" id="confirmNo" value="cancel">Hủy bỏ</button><button class="btn btn-danger" id="confirmYes" value="confirm">Xác nhận thực hiện</button></div></form></dialog>
 
-<dialog class="gw-modal settings-modal" id="settings" aria-labelledby="settingsTitle"><div class="modal-body"><div class="modal-eyebrow">CLOUD / CONNECTION PROFILE</div><h2 id="settingsTitle">Cáº¥u hÃ¬nh EMQX Cloud</h2><p class="modal-intro">Chá»‰ cáº§n thiáº¿t láº­p má»™t láº§n báº±ng tÃ i khoáº£n MQTT <b>Dell-Phone</b>. KhÃ´ng nháº­p máº­t kháº©u quáº£n trá»‹ EMQX.</p>
+<dialog class="gw-modal settings-modal" id="settings" aria-labelledby="settingsTitle"><div class="modal-body"><div class="modal-eyebrow">CLOUD / CONNECTION PROFILE</div><h2 id="settingsTitle">Cấu hình EMQX Cloud</h2><p class="modal-intro">Chỉ cần thiết lập một lần bằng tài khoản MQTT <b>Dell-Phone</b>. Không nhập mật khẩu quản trị EMQX.</p>
   <label for="host">Broker hostname</label><input id="host" placeholder="j1199ec9.ala.asia-southeast1.emqxsl.com" spellcheck="false" autocomplete="off">
   <label for="user">MQTT username</label><input id="user" placeholder="Dell-Phone" autocomplete="off" spellcheck="false">
-  <label for="pass">MQTT password</label><input id="pass" type="password" placeholder="Máº­t kháº©u MQTT Dell-Phone" autocomplete="off">
+  <label for="pass">MQTT password</label><input id="pass" type="password" placeholder="Mật khẩu MQTT Dell-Phone" autocomplete="off">
   <label for="topic">Topic prefix</label><input id="topic" value="home/dell7560" autocomplete="off" spellcheck="false">
-  <label class="checkrow"><input id="remember" type="checkbox"> <span>Ghi nhá»› máº­t kháº©u trÃªn Ä‘iá»‡n thoáº¡i nÃ y</span></label>
-  <p class="fineprint">Khi báº­t ghi nhá»›, trÃ¬nh duyá»‡t lÆ°u máº­t kháº©u dÆ°á»›i dáº¡ng vÄƒn báº£n trong bá»™ nhá»› cá»§a chÃ­nh thiáº¿t bá»‹. KhÃ´ng báº­t trÃªn mÃ¡y dÃ¹ng chung.</p>
-  <div class="modal-actions"><button class="btn btn-outline" type="button" id="configClose">ÄÃ³ng</button><button class="btn btn-primary" type="button" id="connect">LÆ°u &amp; káº¿t ná»‘i</button></div>
+  <label class="checkrow"><input id="remember" type="checkbox"> <span>Ghi nhớ mật khẩu trên điện thoại này</span></label>
+  <p class="fineprint">Khi bật ghi nhớ, trình duyệt lưu mật khẩu dưới dạng văn bản trong bộ nhớ của chính thiết bị. Không bật trên máy dùng chung.</p>
+  <div class="modal-actions"><button class="btn btn-outline" type="button" id="configClose">Đóng</button><button class="btn btn-primary" type="button" id="connect">Lưu &amp; kết nối</button></div>
 </div></dialog>
 <script src="./mqtt.min.js"></script>
-<script src="./icons.js?v=3"></script><script src="./app.js?v=2"></script>
+<script src="./icons.js?v=4"></script>
+<script src="./app.js?v=4"></script>
 </body></html>
