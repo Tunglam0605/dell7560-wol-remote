@@ -1,105 +1,73 @@
+# Dell Precision 7560 — Control Deck v4.6
 
-## Control Deck v4.6 — Power, alarm and Wi-Fi client count
+Trang điều khiển: https://tunglam0605.github.io/dell7560-wol-remote/
 
-**Current deployment status (2026-10-25):** The GitHub Pages UI has removed the experimental room/occupancy/CSI panel and frontend CSI processing. Dell Wake-on-LAN, Windows Agent shutdown/shutdown timer and ESP32 daily alarm/buzzer controls are preserved. The **firmware cleanup and router client-list integration are pending** because the owner Windows Remote Workstation MCP tunnel was offline during this revision. The currently flashed ESP32 firmware may still run CSI collection until a safely verified OTA update. Do not describe firmware as already simplified.
+**Trạng thái ngày 25/10/2026:** Giao diện v4.6 đã được xuất bản. Firmware ESP32 v4.6 **không còn chức năng CSI / giám sát người**; bản application cuối đã được build và nạp OTA qua LAN, kiểm tra sau reboot thành công. Windows Agent và các tính năng nguồn được giữ nguyên. Số client Wi-Fi từ router **chưa có API được xác thực**, vì vậy bảng Wi-Fi phải hiển thị **`--`**, không phải số đếm giả.
 
-The new Wi-Fi panel intentionally displays \`--\` until reliable MQTT telemetry arrives; it never assumes that a station-mode ESP32 knows all the router's clients. Future telemetry on the existing authenticated \`home/dell7560/ack\` topic:
+## Chức năng hiện tại
 
-\`\`\`json
+- **Wake-on-LAN:** Trang HTTPS gửi lệnh có hạn dùng qua MQTT/TLS; ESP32 phát Magic Packet cho Dell. Xác nhận `wol_sent` là **đã gửi packet**, không phải chứng cứ Dell khởi động thành công.
+- **Windows Agent:** Tắt máy sau thời gian xác nhận 45 giây, đặt/hủy lịch tắt, ping và trạng thái online. Lệnh tắt do Windows Agent thực hiện, không bởi ESP32.
+- **Giám sát Dell:** CPU, RAM, pin/nguồn, Ethernet, uptime do Windows Agent xuất bản. Chỉ số cũ tự ẩn.
+- **GPIO4 buzzer:** Bíp xác nhận ngắn, bật báo thức hằng ngày, dừng báo thức, tắt lịch; giới hạn chu kỳ báo tối đa 45 giây. Lịch được lưu bằng NVS trên ESP32, giờ Việt Nam UTC+7.
+- **Wi-Fi clients:** Bảng có sẵn để hiển thị dữ liệu từ router khi có nguồn tin đáng tin cậy. Không có API router thì số liệu để trống. **Không suy đoán số máy từ Wi-Fi station, ARP hay kết quả ping LAN.**
+
+## Kiến trúc
+
+```text
+Browser HTTPS (GitHub Pages)
+   | WSS / MQTT v5, tài khoản đã cấu hình tại trình duyệt
+EMQX Cloud (MQTT/TLS)
+   |-- ESP32: command allowlist, Wake packet, buzzer, NVS alarm,
+   |          Wi-Fi reconnect, SNTP, local LAN-only A/B OTA
+   `-- Windows Agent: presence/aggregate monitor,
+                      shutdown 45-second grace, timer/cancel
+
+Wi-Fi client count (optional, currently NOT available)
+Router associated-station API (read-only, authenticated)
+   -> future verified adapter -> MQTT ack -> dashboard
+```
+
+## Hợp đồng telemetry Wi-Fi
+
+Dashboard chỉ nhận bản tin JSON trên topic `home/dell7560/ack`, có ID `NNNNNNNNNNNNNNNN`, `result="wifi_clients"`, timestamp UNIX hợp lệ và `count` nguyên từ 0 đến 4096.
+
+Ví dụ **cấu trúc, không phải dữ liệu đo được**:
+
+```json
 {"id":"NNNNNNNNNNNNNNNN","result":"wifi_clients","ts":1792900000,"count":5,"source":"router_ap","scope":"wifi_associated","complete":true}
-\`\`\`
-
-\`count\` above is only a **schema example**, not an observed device count. For a verifiable router-derived tally, set \`source=router_ap\`, \`scope=wifi_associated\`, \`complete=true\`. A LAN discovery fallback must instead use \`source=lan_discovery\`, \`scope=lan_visible\`, \`complete=false\`; the UI labels those as devices *observed* in the LAN, not the total attached to Wi-Fi. The dashboard rejects malformed/stale/unsupported telemetry and expires network counts after 120 seconds.
-
-**Remaining firmware work:** Check router model/controller and read-only API for associated wireless station list without exposing its credentials or opening inbound WAN ports; if unsupported, offer only an explicitly incomplete LAN count. Disable CSI init/capture, worker/tasks, periodic RF processing and CSI MQTT reports; remove unused code and build dependencies after ensuring no regressions. Keep ESP32 single-station Wi-Fi, time sync, secure MQTT, OTA rollback, anti-replay command guard, Wi-Fi reconnect, WOL, GPIO4 buzzer and NVS daily alarms. Maintain Windows Agent for safe OS shutdown/scheduling. Build/test, keep a SHA256 backup, OTA with rollback and verify cloud commands end-to-end. No router count or physical beep has been certified by this UI-only change.
-
-
-# Dell Precision 7560 · Tùng Lâm Automation Remote Power
-
-A static HTTPS dashboard for remotely waking and managing a Dell Precision 7560 using ESP32, EMQX Cloud and a Windows background agent.
-
-## Capabilities (Control Deck v4.1)
-
-- Wake Dell from S5 via ESP32 Wake-on-LAN; an ESP32 `wol_sent` acknowledgment confirms transmission **but does not prove the PC has powered on**.
-- Windows Agent: confirmed safe Shutdown (45-second cancellation), scheduled Shutdown (2 minutes to 24 hours), cancellation and startup persistence.
-- Windows Agent System Monitor (read-only): CPU usage, RAM consumption, battery percentage, AC/charging state, Ethernet link and uptime.
-- Ping Windows Agent, device status, logs and mobile-first controls.
-- Windows Agent emits `monitor_v1` telemetry as part of its retained MQTT presence payload every 20 seconds; a Windows power/Ethernet probe refreshes every 45 seconds. No extra MQTT subscription/topic or elevated browser permission is needed.
-- Browser hides monitoring metrics if Agent is offline or the telemetry is stale (85-second timeout).
-
-## Architecture
-
-```
-Browser (GitHub Pages, HTTPS)
-  | WSS/TLS MQTT command + status
-EMQX Cloud
-  |-- ESP32 -> Magic Packet -> Dell Ethernet NIC
-  `-- Windows Agent (SYSTEM / AtStartup)
-         |-- Scheduler / Shutdown
-         `-- Read-only local system telemetry
 ```
 
-## Security
+- `source=router_ap`, `scope=wifi_associated`, `complete=true`: xác nhận router cung cấp danh sách station Wi-Fi đang liên kết.
+- `source=lan_discovery`, `scope=lan_visible`, `complete=false`: chỉ được mô tả là số thiết bị *nhìn thấy trên LAN*, **không** phải tổng thiết bị Wi-Fi.
+- Timestamp vượt tương lai 15 giây, dữ liệu trên 120 giây, sai schema hoặc không được chứng thực về scope đều bị loại. Dữ liệu đã hết hạn sẽ bị ẩn.
+- Không đưa mật khẩu quản trị router vào web tĩnh, ESP firmware, GitHub hoặc MQTT payload. Không mở port quản trị router ra WAN.
+- API router/chính sách cấp quyền chưa xác minh: **adapter sẽ không được kích hoạt** cho đến khi xác định đúng model, API đọc danh sách associated clients và quyền đọc.
 
-- The public site includes **no MQTT passwords, secrets, firmware or Windows credentials**. Broker hostname, MQTT username and topic prefix are editable in Settings.
-- The dashboard never accepts arbitrary shell commands. Windows agent validates a small allowlist of action names and expiring request IDs.
-- Live monitoring publishes only an allowlist of aggregate indicators (no usernames, IP/MAC addresses, hostnames, process lists or files).
-- Device commands require explicit user confirmation. Do not save MQTT passwords on shared devices.
-- Review broker ACLs: ideally use separate least-privilege MQTT identities for phone, ESP32 and Windows Agent.
-- The Dell requires a working standby LAN power path and BIOS WOL configuration to wake from S5; on tested hardware AC power is required.
+## Firmware v4.6 và rollback
 
-## Testing
+- ESP-IDF: v6.1-dev hiện đang được cài trên máy phát triển; bản này đã được build/OTA thành công, chưa phải cơ sở khẳng định đã kiểm thử trên ESP-IDF stable.
+- App image cuối: `private/build-v46-no-csi-final/esp32_dell_wol.bin` (chỉ trên máy Dell, **không có trong repository public**).
+- SHA-256: `9C8FD36050E5FE3BE01F35390274538B48469C60A22D4C38246DBA53D42D88D2`.
+- Partition table không thay đổi. Firmware backup trước lần cập nhật cuối lưu **riêng tư** tại `private/release/v46_before_final_cleanup.bin`.
+- Nhật ký build/OTA riêng tư: `private/v46-final-build-report.txt`, `private/v46-final-ota-acceptance.log`.
+- Chỉ cập nhật **application qua A/B OTA**, không flash bootloader/partition table. Nếu OTA mất liên lạc hoàn toàn, có thể cần can thiệp vật lý.
+- Không có API `/api/csi`, không có worker xử lý RF/person detection, và driver CSI bị tắt trong cấu hình build cuối.
 
-Desktop/mobile layouts and UI command flows are tested with a mock MQTT client, without issuing real Shutdown/Restart commands. The Windows Agent's logic is separately unit-tested. **Live end-to-end telemetry and actual physical Wake/Shutdown require acceptance testing on the user's network and hardware.**
+## Kiểm thử
 
-To use this deployment, connect on the published GitHub Pages URL and enter the MQTT password for the phone principal.
+- Build ESP-IDF: PASS; app 1.021.440 byte; OTA partition còn khoảng 48%.
+- OTA: PASS; phản hồi sau reboot với Wi-Fi/MQTT online, buzzer hoạt động về mặt phần mềm, đồng hồ báo thức đã đồng bộ, CSI endpoint không tồn tại.
+- Frontend mock test: PASS tại 320/390/1440 px; kiểm tra đúng dữ liệu router, dữ liệu LAN không đầy đủ, giới hạn timestamp và giá trị không hợp lệ; không tràn ngang.
+- Buzzer/alarm dashboard mock regression: PASS ba kích cỡ màn hình; không phát lệnh đến thiết bị thật.
+- **Chưa chứng nhận:** kết quả đếm thiết bị Wi-Fi thật từ router, kiểm tra âm thanh còi bằng quan sát vật lý, WOL từ trạng thái Dell S5, luồng Wake/Shutdown thực từ điện thoại ngoài mạng. Những mục này không được báo là PASS.
 
-## Experimental Wi-Fi CSI room monitor (v4.2)
+## Bảo mật và giới hạn phần cứng
 
-The existing ESP32 WROOM-32 can collect Wi-Fi Channel State Information (CSI) from the home router, which is physically ~4–5 m away in the same room.
+- Repository public **không** lưu Wi-Fi password, MQTT credentials, binary chứa credentials hoặc khóa quản trị router.
+- MQTT/TLS dùng broker ACL, expiry và anti-replay; không chèn shell command vào request.
+- ESP32 local HTTP/OTA chỉ dành cho **LAN đáng tin cậy** và không có xác thực mạnh từng người dùng: không port-forward HTTP hoặc UDP 9 lên Internet.
+- GPIO4 là strapping pin. Còi gắn trực tiếp GPIO4 cần kiểm tra dòng tiêu thụ thực tế: nếu vượt giới hạn chân MCU, cần transistor/driver + diode khi tải cảm, không dựa vào giới hạn phần mềm để bảo vệ phần cứng.
+- Không dùng còi làm thiết bị cảnh báo an toàn quan trọng.
 
-- `Giám sát phòng` displays **CALIBRATING**, **MOVEMENT_CANDIDATE**, **QUIET_SIGNAL** or **UNKNOWN** with packet count, RSSI and a diagnostic variation score.
-- ESP32 sends a short, non-retained JSON message every ~10 seconds over the existing `home/dell7560/ack` MQTT topic with `id=CCCCCCCCCCCCCCCC` and `result=csi_sample`.
-- The dashboard rejects stale or malformed messages and expires measurements after 45 seconds.
-- A local-only diagnostic endpoint `GET /api/csi` on the ESP32 provides aggregate CSI status; it does not expose raw CSI data, router identifiers or MAC addresses.
-- The integrated firmware was deployed by supervised LAN OTA on 2026-10-24; Wi-Fi/MQTT resumed, local CSI metrics were observed, and the LAN Wake endpoint still acknowledged a request.
-- **Important:** This is a movement *candidate* indicator. `QUIET_SIGNAL` does not prove an empty room. There are no validated occupancy accuracy claims. True sitting-still/breathing presence detection may require an mmWave sensor or more extensive CSI calibration.
-
-## Subcarrier micro-variation trial (v4.3)
-
-- Uses **only one ESP32-WROOM-32 plus the existing Wi-Fi router**. The local device measures normalized amplitudes of 20 CSI subcarrier groups and computes signal drift and within-window dispersion.
-- Frequency: experimental router Ping around 10 Hz. CSI measurements remain local; only diagnostic summary data is transmitted over MQTT/TLS.
-- Supports \`MICRO_VARIATION\` in addition to \`CALIBRATING\`, \`QUIET_SIGNAL\`, and \`MOVEMENT_CANDIDATE\`. New dashboard metrics are "Dao động nhỏ" and "Tần suất mẫu".
-- A live supervised OTA ran successfully. 24 unlabeled CSI observations averaged **11.02 Hz**, no queue drops, and all reported \`QUIET_SIGNAL\`.
-- **No sleeping-person identification was proven.** A CSI variation could be caused by multipath/noise; a stable CSI reading does **not** imply that nobody is in the room. No heart/breath signal is reported or inferred.
-- Firmware and full raw logs remain on the owner’s private Dell workspace; no Wi-Fi/MQTT secrets or firmware images are placed in this public repository.
-
-## v4.4 — Long-window RF periodicity experiment
-
-- The existing **single ESP32-WROOM-32** analyzes six normalized Wi-Fi CSI subcarrier features in a bounded, static ring buffer.
-- A 60–120-second sinusoidal frequency scan estimates RF spectral-fit percentage and a diagnostic RF cycle frequency. **These are not breath rate, occupancy confidence, or a declaration that someone is in the room.**
-- Safe display: low spectral fit (<10%, a display heuristic only) hides an apparent frequency rather than implying a detected human vital sign.
-- Supervised OTA was deployed successfully, with device Wi-Fi/MQTT confirmed online; approximate free heap 126 KiB. The non-destructive WOL endpoint acknowledged a request while the Dell was already ON, not an actual S5 wake trial.
-- Synthetic C tests passed 7/7. A **150-second UNLABELED** real-world capture contained 30/30 QUIET_SIGNAL observations, with spectral fit **0–1%**, mean **0.73%**. No reliable sleeper presence was identified.
-- An **EMPTY_CONFIRMED** room baseline has **not** yet been recorded; it requires current confirmation that the room is empty. No claim of classification accuracy can be made yet.
-- Source firmware and labeled/unlabeled measurement CSVs remain private on the Windows workstation, not in this GitHub Pages repository.
-
-
-## Control Deck v4.5 — ESP32 buzzer & daily alarm (MQTT/TLS)
-
-One GitHub Pages HTTPS dashboard controls Dell Wake-on-LAN and the ESP32 GPIO4 active-high buzzer **from any network** using the existing EMQX Cloud WSS connection. Neither GitHub Pages nor the browser contacts the ESP32's private LAN HTTP endpoint. No additional router port forwarding, hardware or cloud secret is introduced.
-
-The ESP32 extends the existing `home/dell7560/cmd` command topic with an explicit allowlist:
-- `BEEP|<expires>|<request-id>`
-- `ALARM_SET|<expires>|<request-id>|HHMM` (daily local UTC+07)
-- `ALARM_OFF|<expires>|<request-id>`
-- `ALARM_STOP|<expires>|<request-id>`
-- `ALARM_STATUS|<expires>|<request-id>`
-
-The original `WAKE` wire format is unchanged. Every command is non-retained, time-limited, and deduplicated through the existing firmware command guard. Alarm modifications occur in a separate FreeRTOS queue/task, are persisted to ESP32 NVS, and return request-correlated acknowledgements on the existing `/ack` topic. A non-retained telemetry packet with `id=BBBBBBBBBBBBBBBB`, `result=buzzer_status`, and timestamp communicates buzzer availability, daily schedule, clock sync and ringing state every approximately 15 seconds. The UI disables controls unless fresh device capability telemetry has been observed; older ESP32 firmware remains compatible with Wake control and monitoring.
-
-Alarm beeps are intermittent and limited by firmware to 45 seconds. Wake beeps acknowledge the **sending** of a WOL UDP packet, not the Dell's boot state. The standalone local ESP32 web interface remains available on a trusted LAN.
-
-**Security:** This workflow relies on the existing EMQX authenticated MQTT account/ACLs for `cmd`, `ack` and `status`; command IDs and expiration prevent accidental replay but are not a substitute for broker access control. No password, SSID, binary or private device configuration is checked into this public repo. GPIO4 wiring and buzzer current must still respect ESP32 3.3V GPIO electrical limits.
-
-**Verification:** Device firmware compiled successfully under ESP-IDF. Browser MQTT mock tests passed at 320, 390 and 1440 px, covering beep, daily alarm set, ringing stop, schedule disable, and continuity of the Wake button. Actual cloud command acceptance and physical buzzer sound require separate live confirmation.
+Mã nguồn firmware và bản backup chứa cấu hình vận hành nằm trên máy chủ phát triển riêng tư, không nằm trong repo GitHub Pages.
