@@ -331,21 +331,8 @@ body{background:radial-gradient(ellipse 620px 400px at 58% -12%,rgba(48,112,191,
 }
 @media(max-width:350px){.monitor-head{flex-direction:column}.monitor-caption{flex-direction:row;align-items:center;max-width:100%;text-align:left}.monitor-card strong{font-size:18px}.dock-item small{font-size:7.5px}}
 
-/* v4.6 — Home Wi-Fi client accounting, router-derived totals only */
-.network-panel{margin:0 0 18px}
-.network-badge{flex-shrink:0;border:1px solid var(--border-soft);color:var(--muted);border-radius:100px;padding:8px 10px;font-size:10px;font-weight:750;letter-spacing:.045em;white-space:nowrap}
-.network-badge.connected{border-color:rgba(52,211,153,.35);background:rgba(52,211,153,.08);color:var(--accent)}
-.network-metrics{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.8fr);gap:14px}
-.network-counter{display:flex;flex-direction:column;gap:9px;align-items:center;justify-content:center;min-height:135px;text-align:center;border:1px solid var(--border-soft);border-radius:14px;padding:16px;background:var(--surface-soft)}
-.network-counter strong{font-size:clamp(35px,4vw,54px);font-weight:850;line-height:1.05;letter-spacing:-.06em;font-variant-numeric:tabular-nums}
-.network-counter span{font-size:11px;color:var(--muted);max-width:26ch}
-.network-notes{display:grid;grid-template-columns:1fr;gap:9px}
-.network-notes>div{display:flex;flex-direction:column;justify-content:center;gap:7px;border:1px solid var(--border-soft);background:var(--surface-soft);padding:12px 15px;border-radius:12px}
-.network-notes small{font-size:10px;font-weight:750;color:var(--muted);letter-spacing:.04em}
-.network-notes strong{font-size:13px;overflow-wrap:anywhere}
-.network-hint{margin:13px 0 0;color:var(--muted);font-size:11px;line-height:1.6}
-@media(max-width:760px){.network-panel{margin-bottom:12px}.network-metrics{grid-template-columns:1fr;gap:9px}.network-counter{min-height:95px}.network-notes{grid-template-columns:repeat(2,minmax(0,1fr))}.network-notes>div{padding:11px}.network-notes strong{font-size:11px}.network-badge{font-size:9px}.mobile-dock{grid-template-columns:repeat(6,minmax(0,1fr))}.dock-item small{font-size:7px}.dock-item span{font-size:18px}}
-@media(max-width:390px){.network-panel .panel-heading{flex-wrap:wrap}.network-notes{grid-template-columns:1fr}.mobile-dock{left:4px;right:4px;padding:5px 2px}.dock-item small{font-size:6.5px}}
+/* Control Deck v4.6.1: five shortcuts, no Wi-Fi client detection panel. */
+@media(max-width:390px){.mobile-dock{left:4px;right:4px;padding:5px 2px}}
 
 /* v4.5 — remote ESP32 buzzer and daily alarm (shared MQTT/TLS link) */
 .buzzer-panel{margin-bottom:18px}

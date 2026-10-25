@@ -7,19 +7,18 @@
   <meta name="description" content="Tùng Lâm Automation · Dell Precision 7560 remote power control">
   <title>Dell Remote Power | Tùng Lâm Automation</title>
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo.png">
-  <link rel="stylesheet" href="./ui.css?v=16">
+  <link rel="stylesheet" href="./ui.css?v=17">
 </head>
 <body>
 <div class="app-shell">
   <aside class="sidebar" aria-label="Điều hướng">
     <div class="brand-lockup">
       <img class="brand-logo" src="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo-background.png" alt="Tùng Lâm Automation">
-      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v4.6</span></div>
+      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v4.6.1</span></div>
     </div>
     <div class="nav-label">HỆ THỐNG</div>
     <nav class="nav-links" aria-label="Các khu vực">
       <a class="nav-item active" href="#dashboard"><span class="nav-icon">▦</span> Tổng quan</a>
-      <a class="nav-item" href="#network"><span class="nav-icon">◎</span> Thiết bị Wi-Fi</a>
       <a class="nav-item" href="#buzzer"><span class="nav-icon">♫</span> Còi &amp; báo thức</a>
       <a class="nav-item" href="#monitor"><span class="nav-icon">◫</span> Giám sát hệ thống</a>
       <a class="nav-item" href="#power"><span class="nav-icon">⏻</span> Điều khiển nguồn</a>
@@ -69,22 +68,6 @@
     </section>
 
     
-<section class="panel network-panel" id="network" aria-label="Số thiết bị kết nối Wi-Fi">
-  <div class="panel-heading">
-    <div><div class="eyebrow">ESP32 / HOME NETWORK</div><h2>📶 Thiết bị Wi-Fi</h2>
-      <p>Thống kê thiết bị kết nối Wi-Fi gia đình từ thông tin của router; không giám sát người hoặc chuyển động.</p>
-    </div>
-    <span id="wifiCountBadge" class="network-badge">CHỜ ROUTER</span>
-  </div>
-  <div class="network-metrics">
-    <div class="network-counter"><strong id="wifiDeviceCount">--</strong><span id="wifiDeviceLabel">Chưa có số liệu xác thực</span></div>
-    <div class="network-notes">
-      <div><small>NGUỒN THÔNG TIN</small><strong id="wifiDeviceSource">Chưa kết nối dữ liệu router</strong></div>
-      <div><small>CẬP NHẬT LẦN CUỐI</small><strong id="wifiDeviceUpdated">Chưa có dữ liệu</strong></div>
-    </div>
-  </div>
-  <p id="wifiCountHint" class="network-hint">ESP32 kết nối Wi-Fi như một máy khách nên không tự xem được danh sách máy khách của router. Nếu không có quyền đọc dữ liệu router, số thiết bị dò được trong LAN có thể không đầy đủ.</p>
-</section>
 <section class="panel buzzer-panel" id="buzzer" aria-label="Còi và báo thức ESP32">
   <div class="panel-heading">
     <div><div class="eyebrow">ESP32 / GPIO4 · CLOUD AUTOMATION</div><h2>🔔 Còi &amp; báo thức</h2>
@@ -158,7 +141,7 @@
     </section>
     <footer class="footer"><span><i class="led ok"></i> TUNG LAM AUTOMATION · ENGINEERED FOR RELIABILITY</span><span>MQTT/TLS 8883 &nbsp; / &nbsp; WSS 8084 &nbsp; / &nbsp; ESP32 WOL</span></footer>
   </main>
-<nav class="mobile-dock" aria-label="Điều hướng nhanh"><a href="#dashboard" class="dock-item active" aria-label="Tổng quan"><span aria-hidden="true">⌂</span><small>Tổng quan</small></a><a href="#network" class="dock-item" aria-label="Thiết bị Wi-Fi"><span aria-hidden="true">◎</span><small>Wi-Fi</small></a><a href="#monitor" class="dock-item" aria-label="Giám sát hệ thống"><span aria-hidden="true">◫</span><small>Giám sát</small></a><a href="#power" class="dock-item" aria-label="Điều khiển nguồn"><span aria-hidden="true">⏻</span><small>Điều khiển</small></a><a href="#schedule" class="dock-item" aria-label="Lịch tắt máy"><span aria-hidden="true">◷</span><small>Hẹn giờ</small></a><a href="#buzzer" class="dock-item" aria-label="Còi và báo thức"><span aria-hidden="true">♪</span><small>Còi</small></a></nav>
+<nav class="mobile-dock" aria-label="Điều hướng nhanh"><a href="#dashboard" class="dock-item active" aria-label="Tổng quan"><span aria-hidden="true">⌂</span><small>Tổng quan</small></a><a href="#monitor" class="dock-item" aria-label="Giám sát hệ thống"><span aria-hidden="true">◫</span><small>Giám sát</small></a><a href="#power" class="dock-item" aria-label="Điều khiển nguồn"><span aria-hidden="true">⏻</span><small>Điều khiển</small></a><a href="#schedule" class="dock-item" aria-label="Lịch tắt máy"><span aria-hidden="true">◷</span><small>Hẹn giờ</small></a><a href="#buzzer" class="dock-item" aria-label="Còi và báo thức"><span aria-hidden="true">♪</span><small>Còi</small></a></nav>
 </div>
 
 <dialog class="gw-modal" id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog" class="modal-body"><div class="modal-eyebrow">TUNGLAM · SECURITY CONFIRMATION</div><h2 id="confirmTitle">Xác nhận thao tác</h2><p id="confirmText"></p><div class="modal-actions"><button class="btn btn-outline" id="confirmNo" value="cancel">Hủy bỏ</button><button class="btn btn-danger" id="confirmYes" value="confirm">Xác nhận thực hiện</button></div></form></dialog>
@@ -177,5 +160,5 @@
 </div></dialog>
 <script src="./mqtt.min.js"></script>
 <script src="./icons.js?v=4"></script>
-<script src="./app.js?v=16"></script>
+<script src="./app.js?v=17"></script>
 </body></html>
