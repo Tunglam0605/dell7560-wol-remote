@@ -7,14 +7,14 @@
   <meta name="description" content="Tùng Lâm Automation · Dell Precision 7560 remote power control">
   <title>Dell Remote Power | Tùng Lâm Automation</title>
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo.png">
-  <link rel="stylesheet" href="./ui.css?v=17">
+  <link rel="stylesheet" href="./ui.css?v=18">
 </head>
 <body>
 <div class="app-shell">
   <aside class="sidebar" aria-label="Điều hướng">
     <div class="brand-lockup">
       <img class="brand-logo" src="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo-background.png" alt="Tùng Lâm Automation">
-      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v4.6.1</span></div>
+      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v4.7 RC</span></div>
     </div>
     <div class="nav-label">HỆ THỐNG</div>
     <nav class="nav-links" aria-label="Các khu vực">
@@ -70,30 +70,63 @@
     
 <section class="panel buzzer-panel" id="buzzer" aria-label="Còi và báo thức ESP32">
   <div class="panel-heading">
-    <div><div class="eyebrow">ESP32 / GPIO4 · CLOUD AUTOMATION</div><h2>🔔 Còi &amp; báo thức</h2>
-    <p>Điều khiển từ mọi nơi qua EMQX MQTT/TLS. Lịch báo thức lưu trực tiếp trên ESP32, không phụ thuộc trình duyệt hoặc Dell.</p></div>
+    <div><div class="eyebrow">ESP32 / GPIO4 · MULTI-ALARM v4.7</div><h2>🔔 Đồng hồ báo thức</h2>
+    <p>Tối đa 8 lịch độc lập, lặp theo ngày và chọn giai điệu. ESP32 tự vận hành ngay cả khi Dell tắt hoặc điện thoại đóng trình duyệt.</p></div>
     <span class="buzzer-ready" id="buzzerCloudState">CHỜ THIẾT BỊ</span>
   </div>
   <div class="buzzer-overview">
     <div><span>TRẠNG THÁI CÒI</span><strong id="buzzerActivity">Chưa có dữ liệu</strong></div>
-    <div><span>LỊCH HẰNG NGÀY</span><strong id="buzzerAlarmTime">Chưa đặt</strong></div>
+    <div><span>BÁO THỨC ĐANG BẬT</span><strong id="buzzerAlarmTime">--</strong></div>
     <div><span>ĐỒNG BỘ GIỜ</span><strong id="buzzerClockSync">Đang chờ</strong></div>
   </div>
-  <div class="buzzer-controls">
-    <div class="buzzer-main-control">
-      <label for="buzzerTime">Giờ báo thức (Việt Nam, UTC+7)</label>
-      <input id="buzzerTime" type="time" value="07:00" step="60" aria-describedby="buzzerHelp">
-      <button id="buzzerSet" type="button" class="btn btn-primary" disabled>◷ &nbsp; Lưu báo thức mỗi ngày</button>
+  <div class="alarm-editor">
+    <h3 id="alarmEditorTitle">Thêm báo thức mới</h3>
+    <div class="alarm-fields">
+      <label>Giờ báo thức (Việt Nam, UTC+7)
+        <input id="buzzerTime" type="time" value="07:00" step="60" aria-describedby="buzzerHelp">
+      </label>
+      <label>Chu kỳ lặp
+        <select id="buzzerRepeat">
+          <option value="daily">Hằng ngày</option>
+          <option value="weekdays">Thứ 2 đến thứ 6</option>
+          <option value="weekends">Thứ 7 và Chủ nhật</option>
+          <option value="once">Một lần gần nhất</option>
+          <option value="custom">Chọn ngày tùy ý</option>
+        </select>
+      </label>
+      <label>Âm báo thức
+        <select id="buzzerMelody">
+          <option value="0">Bíp tiêu chuẩn</option>
+          <option value="1">Giai điệu tăng dần</option>
+          <option value="2">Giai điệu nhẹ nhàng</option>
+          <option value="3">Chuông bốn nốt</option>
+        </select>
+      </label>
     </div>
-    <div class="buzzer-quick-actions">
-      <button id="buzzerTest" type="button" class="btn btn-outline" disabled>♪ &nbsp; Thử bíp 1 lần</button>
-      <button id="buzzerStop" type="button" class="btn btn-outline" disabled>■ &nbsp; Dừng tiếng còi</button>
-      <button id="buzzerDisable" type="button" class="btn btn-ghost" disabled>✕ &nbsp; Tắt lịch báo thức</button>
-      <button id="buzzerRefresh" type="button" class="btn btn-ghost" disabled>⟳ &nbsp; Đồng bộ trạng thái</button>
+    <fieldset class="alarm-days" id="buzzerCustomDays" hidden>
+      <legend>Chọn thứ trong tuần</legend>
+      <label><input type="checkbox" value="1"> T2</label>
+      <label><input type="checkbox" value="2"> T3</label>
+      <label><input type="checkbox" value="4"> T4</label>
+      <label><input type="checkbox" value="8"> T5</label>
+      <label><input type="checkbox" value="16"> T6</label>
+      <label><input type="checkbox" value="32"> T7</label>
+      <label><input type="checkbox" value="64"> CN</label>
+    </fieldset>
+    <div class="alarm-editor-actions">
+      <button id="buzzerSet" type="button" class="btn btn-primary" disabled>＋ Thêm báo thức</button>
+      <button id="buzzerCancelEdit" type="button" class="btn btn-ghost" hidden>Hủy chỉnh sửa</button>
     </div>
   </div>
-  <p id="buzzerHelp" class="hint">Thời gian do ESP32 quản lý, tự ngắt tiếng kêu sau 45 giây. Bíp Wake chỉ xác nhận đã gửi gói WOL, không xác nhận Dell đã bật. Không dùng còi làm cảnh báo an toàn.</p>
-  <p id="buzzerFeedback" role="status" aria-live="polite" class="buzzer-feedback">Cần kết nối EMQX và firmware ESP32 hỗ trợ còi từ xa.</p>
+  <div class="alarm-list-head"><h3>Danh sách báo thức</h3><small id="alarmSlotsLeft">Đang chờ đồng bộ</small></div>
+  <div id="buzzerAlarmList" class="alarm-list" aria-live="polite"><p class="hint">Đang chờ trạng thái từ ESP32...</p></div>
+  <div class="buzzer-quick-actions">
+    <button id="buzzerTest" type="button" class="btn btn-outline" disabled>♪ Thử giai điệu đã chọn</button>
+    <button id="buzzerStop" type="button" class="btn btn-outline" disabled>■ Dừng còi đang phát</button>
+    <button id="buzzerRefresh" type="button" class="btn btn-ghost" disabled>⟳ Đồng bộ trạng thái</button>
+  </div>
+  <p id="buzzerHelp" class="hint">Lịch lưu vào NVS của ESP32; mỗi lần báo tối đa 45 giây. GPIO4 dùng PWM cho còi thụ động, không phát MP3 hoặc giọng nói. Không dùng để cảnh báo an toàn.</p>
+  <p id="buzzerFeedback" role="status" aria-live="polite" class="buzzer-feedback">Chờ firmware v4.7 và EMQX MQTT/TLS.</p>
 </section>
 <section class="monitor-panel" id="monitor" aria-label="Giám sát Dell thời gian thực">
   <div class="monitor-head"><div><div class="eyebrow">LIVE TELEMETRY / WINDOWS AGENT</div><h2>Giám sát hệ thống</h2><p>Chỉ số tổng hợp do Dell gửi qua kết nối MQTT/TLS.</p></div>
@@ -160,5 +193,5 @@
 </div></dialog>
 <script src="./mqtt.min.js"></script>
 <script src="./icons.js?v=4"></script>
-<script src="./app.js?v=17"></script>
+<script src="./app.js?v=18"></script>
 </body></html>

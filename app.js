@@ -98,45 +98,159 @@ function renderMonitor(){
 
 
 const BUZZER_STATUS_ID='BBBBBBBBBBBBBBBB';
-let buzzerState=null,buzzerUpdated=0;
-function buzzerReady(){return connected&&espOnline&&buzzerState&&Date.now()-buzzerUpdated<50000}
+const MELODY_LABELS=['Bíp tiêu chuẩn','Giai điệu tăng dần','Giai điệu nhẹ nhàng','Chuông bốn nốt'];
+const DAY_NAMES=['T2','T3','T4','T5','T6','T7','CN'];
+let buzzerState=null,buzzerUpdated=0,alarmEditingSlot=null;
+function buzzerReady(){return connected&&espOnline&&buzzerState?.version===2&&Date.now()-buzzerUpdated<50000}
+const alarmTimeText=a=>String(a.hour).padStart(2,'0')+':'+String(a.minute).padStart(2,'0');
+function alarmDaysText(days){
+ if(days===0)return 'Một lần';
+ if(days===127)return 'Hằng ngày';
+ if(days===31)return 'Thứ 2 – Thứ 6';
+ if(days===96)return 'Thứ 7, Chủ nhật';
+ return DAY_NAMES.filter((_,i)=>days&(1<<i)).join(', ');
+}
 function applyBuzzerSignal(v){
  if(v.result!=='buzzer_status'||v.buzzer_enabled!==true||!Number.isInteger(v.ts)||
     Math.abs(Date.now()/1000-v.ts)>60)return;
  const a=v.alarm;
- if(!a||typeof a.enabled!=='boolean'||typeof a.ringing!=='boolean'||
- typeof a.time_synced!=='boolean'||!Number.isInteger(a.hour)||a.hour<0||a.hour>23||
- !Number.isInteger(a.minute)||a.minute<0||a.minute>59||a.zone!=='Asia/Ho_Chi_Minh')return;
+ if(!a||typeof a.ringing!=='boolean'||typeof a.time_synced!=='boolean'||
+    a.zone!=='Asia/Ho_Chi_Minh')return;
+ if(a.version!==2){
+  buzzerState={version:1,ringing:a.ringing,time_synced:a.time_synced,alarms:[]};
+  buzzerUpdated=Date.now();renderBuzzer();return;
+ }
+ if(!Array.isArray(a.alarms)||a.alarms.length>8)return;
+ const ids=new Set();
+ for(const e of a.alarms){
+  if(!e||!Number.isInteger(e.id)||e.id<0||e.id>7||ids.has(e.id)||
+     typeof e.enabled!=='boolean'||!Number.isInteger(e.hour)||e.hour<0||e.hour>23||
+     !Number.isInteger(e.minute)||e.minute<0||e.minute>59||
+     !Number.isInteger(e.days)||e.days<0||e.days>127||
+     !Number.isInteger(e.melody)||e.melody<0||e.melody>3)return;
+  ids.add(e.id);
+ }
  if(!buzzerState?.ringing&&a.ringing)log('warn','ESP32 đang phát báo thức.');
  buzzerState=a;buzzerUpdated=Date.now();renderBuzzer();
+}
+function alarmRepeatShow(){
+ $('buzzerCustomDays').hidden=$('buzzerRepeat').value!=='custom';
+}
+function alarmDaysValue(){
+ switch($('buzzerRepeat').value){
+  case 'daily':return 127;
+  case 'weekdays':return 31;
+  case 'weekends':return 96;
+  case 'once':return 0;
+  case 'custom':return Array.from($('buzzerCustomDays').querySelectorAll('input:checked'))
+                       .reduce((n,e)=>n+Number(e.value),0);
+  default:return -1;
+ }
+}
+function alarmClearEdit(){
+ alarmEditingSlot=null;
+ $('alarmEditorTitle').textContent='Thêm báo thức mới';
+ $('buzzerSet').textContent='＋ Thêm báo thức';
+ $('buzzerCancelEdit').hidden=true;
+ $('buzzerRepeat').value='daily';
+ $('buzzerMelody').value='0';
+ alarmRepeatShow();
+ renderBuzzer();
+}
+function alarmEdit(slot){
+ if(!buzzerReady())return;
+ const e=buzzerState.alarms.find(x=>x.id===slot);
+ if(!e)return;
+ alarmEditingSlot=slot;
+ $('buzzerTime').value=alarmTimeText(e);
+ $('buzzerMelody').value=String(e.melody);
+ $('buzzerRepeat').value=e.days===127?'daily':e.days===31?'weekdays':
+                          e.days===96?'weekends':e.days===0?'once':'custom';
+ for(const cb of $('buzzerCustomDays').querySelectorAll('input'))
+  cb.checked=(e.days&Number(cb.value))!==0;
+ alarmRepeatShow();
+ $('alarmEditorTitle').textContent='Chỉnh sửa báo thức '+(slot+1);
+ $('buzzerSet').textContent='✓ Lưu thay đổi';
+ $('buzzerCancelEdit').hidden=false;
+ $('buzzerTime').focus();
+ renderBuzzer();
+}
+function alarmListRender(ready){
+ const list=$('buzzerAlarmList');
+ list.replaceChildren();
+ if(!ready){
+  const p=document.createElement('p');p.className='hint';
+  p.textContent=connected&&espOnline&&buzzerState?.version===1?
+    'ESP32 đang chạy firmware cũ. Cần firmware v4.7 để dùng nhiều báo thức.':
+    'Đang chờ dữ liệu lịch báo thức từ ESP32.';
+  list.append(p);return;
+ }
+ const items=[...buzzerState.alarms].sort((a,b)=>a.hour*60+a.minute-b.hour*60-b.minute);
+ if(!items.length){
+  const p=document.createElement('p');p.className='hint';
+  p.textContent='Chưa có báo thức. Chọn giờ và nhấn “Thêm báo thức”.';list.append(p);
+ }
+ for(const e of items){
+  const card=document.createElement('div');card.className='alarm-item'+(e.enabled?'':' alarm-muted');
+  const desc=document.createElement('div');desc.className='alarm-item-main';
+  const time=document.createElement('strong');time.textContent=alarmTimeText(e);
+  const details=document.createElement('small');
+  details.textContent=alarmDaysText(e.days)+' · '+MELODY_LABELS[e.melody];
+  desc.append(time,details);
+  const actions=document.createElement('div');actions.className='alarm-item-actions';
+  const make=(label,fn,cls)=>{const btn=document.createElement('button');
+   btn.type='button';btn.className='btn btn-sm '+cls;btn.textContent=label;
+   btn.disabled=!!pending;btn.addEventListener('click',fn);return btn;};
+  actions.append(
+   make(e.enabled?'Đang bật':'Đã tắt',()=>command('ALARM_ENABLE',String(e.id)+(e.enabled?'0':'1')),e.enabled?'alarm-on':'alarm-off'),
+   make('Sửa',()=>alarmEdit(e.id),'btn-outline'),
+   make('Xóa',()=>ask('Xóa báo thức?','Xóa '+alarmTimeText(e)+' khỏi ESP32?',()=>command('ALARM_DELETE',String(e.id))),'btn-ghost')
+  );
+  card.append(desc,actions);list.append(card);
+ }
 }
 function renderBuzzer(){
  const ready=!!buzzerReady(),a=ready?buzzerState:null;
  const badge=$('buzzerCloudState');
  badge.className='buzzer-ready '+(ready?'ready':connected&&espOnline?'bad':'');
- badge.textContent=ready?'CÒI ONLINE':connected&&espOnline?'CHỜ FIRMWARE':'CHƯA KẾT NỐI';
+ badge.textContent=ready?'CÒI ONLINE':connected&&espOnline&&buzzerState?.version===1?
+  'CẦN V4.7':connected&&espOnline?'CHỜ FIRMWARE':'CHƯA KẾT NỐI';
  $('buzzerActivity').textContent=!a?'Chưa xác nhận':a.ringing?'ĐANG BÁO THỨC':'Sẵn sàng';
- $('buzzerAlarmTime').textContent=!a?'--':a.enabled?String(a.hour).padStart(2,'0')+':'+String(a.minute).padStart(2,'0'):'Đã tắt';
+ $('buzzerAlarmTime').textContent=!a?'--':a.alarms.filter(e=>e.enabled).length+' / 8';
  $('buzzerClockSync').textContent=!a?'--':a.time_synced?'Đã đồng bộ':'Chờ đồng bộ';
- if(a&&a.enabled&&document.activeElement!==$('buzzerTime'))
-   $('buzzerTime').value=String(a.hour).padStart(2,'0')+':'+String(a.minute).padStart(2,'0');
+ $('alarmSlotsLeft').textContent=!a?'Chưa có dữ liệu':(8-a.alarms.length)+' vị trí còn trống';
  $('buzzerTest').disabled=!ready||!!pending;
- $('buzzerSet').disabled=!ready||!a.time_synced||!!pending;
- $('buzzerDisable').disabled=!ready||!a.enabled||!!pending;
+ $('buzzerSet').disabled=!ready||!a.time_synced||!!pending||
+   (alarmEditingSlot===null&&a.alarms.length>=8);
  $('buzzerStop').disabled=!ready||!!pending;
  $('buzzerRefresh').disabled=!connected||!espOnline||!!pending;
- if(!a)$('buzzerFeedback').textContent=connected&&espOnline?
-  'Đang chờ trạng thái còi từ ESP32. Firmware cũ không hỗ trợ nút điều khiển này.':
-  'Cần kết nối EMQX và ESP32 để điều khiển còi.';
+ alarmListRender(ready);
+ if(!ready)$('buzzerFeedback').textContent=connected&&espOnline?
+  'Đang chờ trạng thái v4.7 từ ESP32.':'Cần kết nối EMQX và ESP32.';
 }
 function buzzerAction(action){
- if(action!=='ALARM_STATUS'&&!buzzerReady()){log('warn','Chưa có phản hồi chức năng còi');return}
- if(action==='ALARM_SET'){
-  const t=$('buzzerTime').value;
-  if(!/^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(t)){log('warn','Giờ báo thức không hợp lệ');return}
-  ask('Đặt báo thức hằng ngày?','ESP32 sẽ kêu mỗi ngày lúc '+t+
-  ' theo giờ Việt Nam và tự ngắt sau 45 giây.',()=>command('ALARM_SET',t.replace(':','')));
+ if(action!=='ALARM_STATUS'&&!buzzerReady()){log('warn','ESP32 chưa xác nhận firmware báo thức v4.7');return}
+ if(action==='ALARM_PUT'){
+  const time=$('buzzerTime').value,dayMask=alarmDaysValue();
+  if(!/^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(time)){
+   log('warn','Giờ báo thức không hợp lệ');return;
+  }
+  if(dayMask<0||(dayMask===0&&$('buzzerRepeat').value==='custom')){
+   log('warn','Hãy chọn ít nhất một ngày lặp');return;
+  }
+  let slot=alarmEditingSlot;
+  if(slot===null){
+   const used=new Set(buzzerState.alarms.map(x=>x.id));
+   slot=Array.from({length:8},(_,i)=>i).find(i=>!used.has(i));
+  }
+  if(slot===undefined){log('warn','Đã đủ 8 báo thức');return}
+  const melody=Number($('buzzerMelody').value);
+  const payload=String(slot)+time.replace(':','')+dayMask.toString(16).padStart(2,'0').toUpperCase()+String(melody);
+  command('ALARM_PUT',payload);
   return;
+ }
+ if(action==='MELODY_TEST'){
+  command('MELODY_TEST',$('buzzerMelody').value);return;
  }
  command(action);
 }
@@ -319,15 +433,19 @@ function connect(){
    pending=null;
    lastStateAt=Date.now();
    if(action==='WAKE')log(a.result==='wol_sent'?'success':'warn',a.result==='wol_sent'?'ESP32 đã gửi Magic Packet. Hãy chờ Dell khởi động.':'Wake: '+a.result);
-   else if(['BEEP','ALARM_SET','ALARM_OFF','ALARM_STOP','ALARM_STATUS'].includes(action)){
-     const success=['beep_queued','alarm_saved','alarm_disabled','alarm_stopped','alarm_status_ok'].includes(a.result);
-     const messages={beep_queued:'ESP32 đã xếp lệnh bíp',alarm_saved:'ESP32 đã lưu lịch báo thức',
+   else if(['BEEP','ALARM_SET','ALARM_OFF','ALARM_STOP','ALARM_STATUS',
+            'ALARM_PUT','ALARM_ENABLE','ALARM_DELETE','MELODY_TEST'].includes(action)){
+     const success=['beep_queued','melody_queued','alarm_saved','alarm_deleted',
+                    'alarm_disabled','alarm_stopped','alarm_status_ok'].includes(a.result);
+     const messages={beep_queued:'ESP32 đã xếp lệnh bíp',melody_queued:'Đã xếp phát thử giai điệu',
+      alarm_saved:'ESP32 đã lưu báo thức',alarm_deleted:'ESP32 đã xóa báo thức',
       alarm_disabled:'ESP32 đã tắt lịch báo thức',alarm_stopped:'Đã gửi lệnh dừng còi',
       alarm_status_ok:'Đã yêu cầu đồng bộ trạng thái còi'};
      const message=messages[a.result]||'Điều khiển còi: '+String(a.result).slice(0,50);
      $('buzzerFeedback').textContent=message;
      $('buzzerFeedback').className='buzzer-feedback'+(success?'':' err');
      log(success?'success':'warn',message);
+     if(action==='ALARM_PUT'&&success)alarmClearEdit();
    }
    else if(action==='SHUTDOWN'||action==='SCHEDULE'){
      if(['shutdown_scheduled','timer_scheduled','shutdown_already_scheduled'].includes(a.result)){
@@ -352,12 +470,13 @@ function connect(){
 function command(action,target){
  if(!mqttClient||!connected||pending)return false;
  if(action==='WAKE'&&!espOnline)return false;
- if(['BEEP','ALARM_SET','ALARM_OFF','ALARM_STOP','ALARM_STATUS'].includes(action)
+ if(['BEEP','ALARM_SET','ALARM_OFF','ALARM_STOP','ALARM_STATUS',
+     'ALARM_PUT','ALARM_ENABLE','ALARM_DELETE','MELODY_TEST'].includes(action)
  &&(!espOnline||(action!=='ALARM_STATUS'&&!buzzerReady())))return false;
  if(['SHUTDOWN','CANCEL','SCHEDULE'].includes(action)&&!agentOnline)return false;
  if(action==='SCHEDULE'&&!timerSupported)return false;
  const now=Math.floor(Date.now()/1000),expiry=now+30,id=randomHex();
- const extra=(action==='SCHEDULE'||action==='ALARM_SET')?'|'+target:'';
+ const extra=['SCHEDULE','ALARM_SET','ALARM_PUT','ALARM_ENABLE','ALARM_DELETE','MELODY_TEST'].includes(action)?'|'+target:'';
  pending={id,action,sentAt:Date.now()};updateState();
  mqttClient.publish(prefix+'/cmd',action+'|'+expiry+'|'+id+extra,{qos:1,retain:false},err=>{
    if(err&&pending?.id===id){pending=null;updateState();log('error','Gửi lệnh lỗi: '+err.message);}
@@ -404,11 +523,12 @@ function init(){
   $('connect').addEventListener('click',connect);
   $('reconnect').addEventListener('click',()=>{if($('pass').value)connect();else openSettings(false)});
   $('wake').addEventListener('click',()=>command('WAKE'));
-  $('buzzerTest').addEventListener('click',()=>buzzerAction('BEEP'));
-  $('buzzerSet').addEventListener('click',()=>buzzerAction('ALARM_SET'));
+  $('buzzerTest').addEventListener('click',()=>buzzerAction('MELODY_TEST'));
+  $('buzzerSet').addEventListener('click',()=>buzzerAction('ALARM_PUT'));
   $('buzzerStop').addEventListener('click',()=>buzzerAction('ALARM_STOP'));
-  $('buzzerDisable').addEventListener('click',()=>buzzerAction('ALARM_OFF'));
   $('buzzerRefresh').addEventListener('click',()=>buzzerAction('ALARM_STATUS'));
+  $('buzzerRepeat').addEventListener('change',alarmRepeatShow);
+  $('buzzerCancelEdit').addEventListener('click',alarmClearEdit);
   $('pingAgent').addEventListener('click',()=>{if(!command('PING'))log('warn','Không thể kiểm tra lúc này, hãy chờ lệnh đang xử lý.');});
   $('copyLog').addEventListener('click',async()=>{
     const data=Array.from($('log').querySelectorAll('.log-entry')).map(el=>el.innerText.trim()).join('\n');

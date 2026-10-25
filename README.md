@@ -1,3 +1,21 @@
+# Dell Precision 7560 — Control Deck v4.7 RC
+
+**Candidate only — not published.** Production GitHub Pages remains v4.6.1 until ESP32 firmware v4.7 is installed and its safety checks pass. Development branch: `feature/v47-multi-alarm-melodies`.
+
+## Multi-alarm interface
+
+- Create up to eight independent schedules with time, repeat rule (daily, weekdays, weekends, one-time, or custom days), and four passive-buzzer melody presets.
+- View the authoritative ESP32 NVS alarm list; edit, toggle, and delete individual slots. No browser-only alarms.
+- Commands are sent over the existing MQTT/TLS session with expiry, random request ID and anti-replay guard. UI waits for ACK/telemetry and refuses to edit on unsupported/stale firmware.
+- Preserves WOL, Windows Agent power controls, metrics, and the earlier deletion of Wi-Fi device recognition.
+- No firmware, password, token, NVS dump or production sdkconfig is stored in this public repository.
+
+**Tests, 25/10/2026:** `node ../test-multi-alarm-v47.js` and `node ../test-control-deck-no-device-detection.js` PASS on 320/390/768/1440 px with mocked MQTT. A browser mock is not physical audio or true firmware acceptance.
+
+**Release gate:** ESP32 firmware v4.7 built successfully but not yet OTA-flashed; passive buzzer load/driver and GPIO4 boot behavior still need verification. Keep GitHub Pages on v4.6.1 until device and dashboard use compatible versions.
+
+---
+
 # Dell Precision 7560 — Control Deck v4.6.1
 
 Trang điều khiển HTTPS: https://tunglam0605.github.io/dell7560-wol-remote/

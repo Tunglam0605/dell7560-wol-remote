@@ -356,3 +356,33 @@ html[data-theme=light] #buzzerTime{color-scheme:light}
 .buzzer-panel .hint{margin-top:14px}
 @media(max-width:800px){.buzzer-controls{grid-template-columns:1fr}.buzzer-overview{gap:7px}.buzzer-overview>div{padding:10px}.buzzer-overview span{font-size:9px}.buzzer-overview strong{font-size:14px}.buzzer-quick-actions .btn{font-size:11px}}
 @media(max-width:390px){.buzzer-panel .panel-heading{flex-wrap:wrap}.buzzer-ready{font-size:9px}.buzzer-overview{grid-template-columns:repeat(2,minmax(0,1fr))}.buzzer-overview>div:last-child{grid-column:1/-1}}
+
+
+/* v4.7 multi-alarm editor — stored schedules live on the ESP32. */
+.alarm-editor{border:1px solid var(--border-soft);background:var(--surface-soft);border-radius:16px;padding:18px;margin:16px 0}
+.alarm-editor h3,.alarm-list-head h3{font-size:16px;margin:0 0 13px;color:var(--text)}
+.alarm-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.alarm-fields label{display:flex;flex-direction:column;gap:7px;font-size:12px;font-weight:700;color:var(--muted)}
+.alarm-fields input,.alarm-fields select{min-width:0;width:100%;padding:11px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px}
+.alarm-fields input:focus,.alarm-fields select:focus{outline:2px solid var(--accent);outline-offset:2px}
+.alarm-days{border:1px solid var(--border-soft);margin:14px 0 0;border-radius:12px;padding:12px;display:flex;flex-wrap:wrap;gap:8px}
+.alarm-days[hidden]{display:none}
+.alarm-days legend{font-weight:700;font-size:12px;color:var(--muted);padding:0 6px}
+.alarm-days label{display:flex;align-items:center;gap:5px;padding:6px 9px;background:var(--surface);border-radius:10px}
+.alarm-days input{accent-color:var(--accent)}
+.alarm-editor-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.alarm-editor-actions .btn{max-width:270px}
+.alarm-list-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:22px}
+.alarm-list-head small{color:var(--muted)}
+.alarm-list{display:grid;gap:9px;margin:0 0 16px}
+.alarm-item{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--border-soft);border-radius:13px;padding:13px;background:var(--surface-soft)}
+.alarm-item-main{display:flex;flex-direction:column;gap:2px;min-width:120px}
+.alarm-item-main strong{font-size:24px;font-variant-numeric:tabular-nums;color:var(--text);line-height:1.15}
+.alarm-item-main small{color:var(--muted);font-size:12px}
+.alarm-item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.alarm-item-actions .btn{padding:8px 11px;min-height:35px}
+.alarm-item-actions .alarm-on{background:rgba(52,211,153,.13);border:1px solid var(--accent);color:var(--accent)}
+.alarm-item-actions .alarm-off{background:var(--surface);border:1px solid var(--border);color:var(--muted)}
+.alarm-item.alarm-muted{opacity:.78}
+@media(max-width:780px){.alarm-fields{grid-template-columns:1fr 1fr}.alarm-fields label:last-child{grid-column:span 2}}
+@media(max-width:520px){.alarm-fields{grid-template-columns:1fr}.alarm-fields label:last-child{grid-column:auto}.alarm-item{align-items:flex-start;flex-direction:column}.alarm-item-actions{width:100%;justify-content:flex-start}.alarm-editor-actions .btn{max-width:none}}
