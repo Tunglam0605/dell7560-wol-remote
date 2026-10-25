@@ -1,3 +1,19 @@
+
+## Control Deck v4.6 — Power, alarm and Wi-Fi client count
+
+**Current deployment status (2026-10-25):** The GitHub Pages UI has removed the experimental room/occupancy/CSI panel and frontend CSI processing. Dell Wake-on-LAN, Windows Agent shutdown/shutdown timer and ESP32 daily alarm/buzzer controls are preserved. The **firmware cleanup and router client-list integration are pending** because the owner Windows Remote Workstation MCP tunnel was offline during this revision. The currently flashed ESP32 firmware may still run CSI collection until a safely verified OTA update. Do not describe firmware as already simplified.
+
+The new Wi-Fi panel intentionally displays \`--\` until reliable MQTT telemetry arrives; it never assumes that a station-mode ESP32 knows all the router's clients. Future telemetry on the existing authenticated \`home/dell7560/ack\` topic:
+
+\`\`\`json
+{"id":"NNNNNNNNNNNNNNNN","result":"wifi_clients","ts":1792900000,"count":5,"source":"router_ap","scope":"wifi_associated","complete":true}
+\`\`\`
+
+\`count\` above is only a **schema example**, not an observed device count. For a verifiable router-derived tally, set \`source=router_ap\`, \`scope=wifi_associated\`, \`complete=true\`. A LAN discovery fallback must instead use \`source=lan_discovery\`, \`scope=lan_visible\`, \`complete=false\`; the UI labels those as devices *observed* in the LAN, not the total attached to Wi-Fi. The dashboard rejects malformed/stale/unsupported telemetry and expires network counts after 120 seconds.
+
+**Remaining firmware work:** Check router model/controller and read-only API for associated wireless station list without exposing its credentials or opening inbound WAN ports; if unsupported, offer only an explicitly incomplete LAN count. Disable CSI init/capture, worker/tasks, periodic RF processing and CSI MQTT reports; remove unused code and build dependencies after ensuring no regressions. Keep ESP32 single-station Wi-Fi, time sync, secure MQTT, OTA rollback, anti-replay command guard, Wi-Fi reconnect, WOL, GPIO4 buzzer and NVS daily alarms. Maintain Windows Agent for safe OS shutdown/scheduling. Build/test, keep a SHA256 backup, OTA with rollback and verify cloud commands end-to-end. No router count or physical beep has been certified by this UI-only change.
+
+
 # Dell Precision 7560 · Tùng Lâm Automation Remote Power
 
 A static HTTPS dashboard for remotely waking and managing a Dell Precision 7560 using ESP32, EMQX Cloud and a Windows background agent.
