@@ -147,11 +147,27 @@ function alarmDaysValue(){
   default:return -1;
  }
 }
+function alarmOpenEditor(){
+ $('alarmEditor').hidden=false;
+ $('alarmEditorToggle').setAttribute('aria-expanded','true');
+}
+function alarmToggleEditor(){
+ if(!$('alarmEditor').hidden){alarmClearEdit();return}
+ alarmEditingSlot=null;
+ $('alarmEditorTitle').textContent='Thêm báo thức mới';
+ $('buzzerSet').textContent='＋ Thêm báo thức';
+ $('buzzerCancelEdit').hidden=true;
+ alarmOpenEditor();
+ $('buzzerTime').focus();
+ renderBuzzer();
+}
 function alarmClearEdit(){
  alarmEditingSlot=null;
  $('alarmEditorTitle').textContent='Thêm báo thức mới';
  $('buzzerSet').textContent='＋ Thêm báo thức';
  $('buzzerCancelEdit').hidden=true;
+ $('alarmEditor').hidden=true;
+ $('alarmEditorToggle').setAttribute('aria-expanded','false');
  $('buzzerRepeat').value='daily';
  $('buzzerMelody').value='0';
  alarmRepeatShow();
@@ -172,6 +188,7 @@ function alarmEdit(slot){
  $('alarmEditorTitle').textContent='Chỉnh sửa báo thức '+(slot+1);
  $('buzzerSet').textContent='✓ Lưu thay đổi';
  $('buzzerCancelEdit').hidden=false;
+ alarmOpenEditor();
  $('buzzerTime').focus();
  renderBuzzer();
 }
@@ -188,7 +205,7 @@ function alarmListRender(ready){
  const items=[...buzzerState.alarms].sort((a,b)=>a.hour*60+a.minute-b.hour*60-b.minute);
  if(!items.length){
   const p=document.createElement('p');p.className='hint';
-  p.textContent='Chưa có báo thức. Chọn giờ và nhấn “Thêm báo thức”.';list.append(p);
+  p.textContent='Chưa có báo thức. Nhấn “Thêm báo thức mới” để tạo lịch.';list.append(p);
  }
  for(const e of items){
   const card=document.createElement('div');card.className='alarm-item'+(e.enabled?'':' alarm-muted');
@@ -250,7 +267,7 @@ function buzzerAction(action){
   return;
  }
  if(action==='MELODY_TEST'){
-  command('MELODY_TEST',$('buzzerMelody').value);return;
+  command('MELODY_TEST',$('buzzerPreviewMelody').value);return;
  }
  command(action);
 }
@@ -525,6 +542,7 @@ function init(){
   $('wake').addEventListener('click',()=>command('WAKE'));
   $('buzzerTest').addEventListener('click',()=>buzzerAction('MELODY_TEST'));
   $('buzzerSet').addEventListener('click',()=>buzzerAction('ALARM_PUT'));
+  $('alarmEditorToggle').addEventListener('click',alarmToggleEditor);
   $('buzzerStop').addEventListener('click',()=>buzzerAction('ALARM_STOP'));
   $('buzzerRefresh').addEventListener('click',()=>buzzerAction('ALARM_STATUS'));
   $('buzzerRepeat').addEventListener('change',alarmRepeatShow);
@@ -548,18 +566,56 @@ function init(){
   $('timeMode').addEventListener('change',()=>{$('dateGroup').hidden=$('timeMode').value!=='datetime';refreshSchedulePreview();});
   $('shutdownAt').addEventListener('change',refreshSchedulePreview);
   $('shutdownAt').addEventListener('input',refreshSchedulePreview);
-  document.querySelectorAll('.dock-item').forEach(a=>a.addEventListener('click',()=>{
-    document.querySelectorAll('.dock-item').forEach(x=>x.classList.toggle('active',x===a));
-  }));
-  const sections=['dashboard','buzzer','monitor','power','schedule','events'].map(id=>$(id));
-  if('IntersectionObserver' in window){
-    const obs=new IntersectionObserver(entries=>{
-      const visible=entries.filter(e=>e.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
-      if(visible)document.querySelectorAll('.dock-item').forEach(a=>
-        a.classList.toggle('active',a.getAttribute('href')==='#'+visible.target.id));
-    },{rootMargin:'-20% 0px -50% 0px',threshold:[0,.15,.4]});
-    sections.forEach(s=>obs.observe(s));
+  // Client-side routes: keep a single MQTT connection and all DOM controls alive.
+  // Hide inactive views without removing handlers, data, or pending commands.
+  const routeMeta={
+    dashboard:['TỔNG QUAN','BẢNG ĐIỀU KHIỂN','Trạng thái và lối tắt truy cập các chức năng chính.'],
+    buzzer:['BÁO THỨC','ĐỒNG HỒ BÁO THỨC','Quản lý 8 lịch trên ESP32 và thử âm báo.'],
+    monitor:['GIÁM SÁT','GIÁM SÁT DELL','Thông số hệ thống theo thời gian thực.'],
+    power:['ĐIỀU KHIỂN','ĐIỀU KHIỂN NGUỒN','Bật máy qua WOL hoặc yêu cầu tắt an toàn.'],
+    schedule:['HẸN GIỜ','LỊCH TẮT MÁY','Đặt lịch độc lập trên Windows Agent.'],
+    events:['NHẬT KÝ','NHẬT KÝ SỰ KIỆN','Lịch sử lệnh và phản hồi của thiết bị.']
+  };
+  const more=$('mobileMoreMenu'),moreButton=$('mobileMoreButton');
+  const closeMore=()=>{more.hidden=true;moreButton.setAttribute('aria-expanded','false')};
+  function renderRoute(){
+    const name=window.location.hash.slice(1);
+    const view=Object.prototype.hasOwnProperty.call(routeMeta,name)?name:'dashboard';
+    document.querySelectorAll('[data-view]').forEach(node=>{
+      node.hidden=node.dataset.view!==view;
+    });
+    const meta=routeMeta[view];
+    $('routeLabel').textContent=meta[0];
+    $('tabTitle').textContent=meta[1];
+    $('tabDescription').textContent=meta[2];
+    $('tabHeader').hidden=view==='dashboard';
+    document.title=meta[1]+' | Dell Remote Control';
+    document.querySelectorAll('.nav-item,.dock-item[href],.mobile-more-link').forEach(a=>{
+      const selected=a.getAttribute('href')==='#'+view;
+      a.classList.toggle('active',selected);
+      if(selected)a.setAttribute('aria-current','page');
+      else a.removeAttribute('aria-current');
+    });
+    moreButton.classList.toggle('active',view==='events'||view==='monitor');
+    closeMore();
+    window.scrollTo(0,0);
   }
+  moreButton.addEventListener('click',()=>{
+    more.hidden=!more.hidden;
+    moreButton.setAttribute('aria-expanded',String(!more.hidden));
+  });
+  document.addEventListener('click',e=>{
+    if(!more.hidden&&!e.target.closest('.mobile-dock'))closeMore();
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&!more.hidden){closeMore();moreButton.focus();}
+  });
+  document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',()=>{
+    if(a.getAttribute('href')===window.location.hash)renderRoute();
+  }));
+  window.addEventListener('hashchange',renderRoute);
+  window.addEventListener('pageshow',e=>{if(e.persisted)renderRoute()});
+  renderRoute();
   setInterval(()=>{
     if(agentOnline&&lastAgentHeartbeatAt&&Date.now()-lastAgentHeartbeatAt>75000){
       agentOnline=false;timerSupported=false;lastAgentHeartbeatAt=0;
