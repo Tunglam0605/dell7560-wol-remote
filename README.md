@@ -1,22 +1,41 @@
-# Dell Precision 7560 — Control Deck v4.7 RC
+# Dell Precision 7560 — Control Deck v4.8 (Multi-tab UI)
 
-**Candidate only — not published.** Production GitHub Pages remains v4.6.1 until ESP32 firmware v4.7 is installed and its safety checks pass. Development branch: `feature/v47-multi-alarm-melodies`.
+**Website chính thức duy nhất:** https://tunglam0605.github.io/dell7560-wol-remote/
 
-## Multi-alarm interface
+v4.8 thay đổi **chỉ giao diện website**, không tạo trang/repository mới và không nạp lại ESP32. Firmware đã triển khai và xác minh lần gần nhất là `4.7.0-rc1`. Chức năng phát âm thanh thực tế chưa được nghiệm thu; không khẳng định rằng việc nhấn "Thử" luôn làm còi phát tiếng.
 
-- Create up to eight independent schedules with time, repeat rule (daily, weekdays, weekends, one-time, or custom days), and four passive-buzzer melody presets.
-- View the authoritative ESP32 NVS alarm list; edit, toggle, and delete individual slots. No browser-only alarms.
-- Commands are sent over the existing MQTT/TLS session with expiry, random request ID and anti-replay guard. UI waits for ACK/telemetry and refuses to edit on unsupported/stale firmware.
-- Preserves WOL, Windows Agent power controls, metrics, and the earlier deletion of Wi-Fi device recognition.
-- No firmware, password, token, NVS dump or production sdkconfig is stored in this public repository.
+## Kiến trúc giao diện
 
-**Tests, 25/10/2026:** `node ../test-multi-alarm-v47.js` and `node ../test-control-deck-no-device-detection.js` PASS on 320/390/768/1440 px with mocked MQTT. A browser mock is not physical audio or true firmware acceptance.
+- **Tổng quan:** Trạng thái MQTT, ESP32, Windows Agent, lịch tắt máy; các thẻ điều hướng nhanh thay vì dồn tất cả widget vào cùng trang.
+- **Điều khiển nguồn:** Wake-on-LAN, tắt máy an toàn, hủy lệnh đang chờ.
+- **Hẹn giờ:** Lựa chọn thời gian/tần suất và hủy lịch đã đặt trên Windows Agent.
+- **Đồng hồ báo thức:** Danh sách tối đa 8 lịch ở ESP32; bấm "Thêm báo thức" mới hiện form, bấm "Sửa" mở form đã điền; âm thử có bộ chọn giai điệu riêng luôn nhìn thấy.
+- **Giám sát:** CPU, RAM, pin/nguồn, Ethernet, uptime.
+- **Nhật ký:** Thông báo kết nối, phản hồi lệnh và nhật ký phiên trình duyệt.
 
-**Release gate:** ESP32 firmware v4.7 built successfully but not yet OTA-flashed; passive buzzer load/driver and GPIO4 boot behavior still need verification. Keep GitHub Pages on v4.6.1 until device and dashboard use compatible versions.
+Desktop dùng sidebar sáu mục. Mobile dùng thanh điều hướng năm nút (Tổng quan, Nguồn, Hẹn giờ, Báo thức, Thêm); trong **Thêm** có Giám sát và Nhật ký.
+
+Hash routes `#dashboard`, `#power`, `#schedule`, `#buzzer`, `#monitor`, `#events` hoạt động trong **cùng một HTML**. Chuyển tab chỉ đặt `hidden` trên các vùng nội dung: không dựng lại MQTT client, không mất trạng thái, không gửi lệnh nhầm và không xóa lịch ở ESP32. Hashchange hỗ trợ nút Quay lại/Tiến tới trình duyệt.
+
+## Kiểm thử
+
+- Kiểm tra cú pháp JavaScript, 110 ID không trùng, đầy đủ 6 route và nút điều khiển cũ: **PASS**.
+- Thực thi chính hàm điều hướng với DOM mô phỏng: đổi 6 tab, chỉ một trang đang hiển thị, trạng thái active/aria-current, route lỗi quay về Tổng quan, menu Thêm và Escape: **PASS**.
+- Thực thi logic form báo thức với DOM mô phỏng: mở form thêm, hủy/đóng, sửa giờ/giai điệu, reset khi lưu: **PASS**.
+- Cần người dùng kiểm tra tiếp âm thanh GPIO4 và thao tác thực tế trên trình duyệt kết nối EMQX; các bài kiểm tra mô phỏng không thay thế nghiệm thu phần cứng.
+
+## Nguồn và phạm vi
+
+- Source frontend: `index.html`, `app.js`, `ui.css`, `icons.js`, `mqtt.min.js`.
+- Không thay đổi lệnh, thời hạn lệnh, định dạng ACK, thông tin đăng nhập hoặc firmware qua bản v4.8 giao diện này.
+- Không có credential trong repository; mật khẩu MQTT nhập trong giao diện người dùng.
+- Không phục hồi chức năng dò tìm thiết bị Wi-Fi đã gỡ.
+- Lịch sử v4.6.1 bên dưới được giữ lại cho mục đích truy vết, **không phản ánh phiên bản đang phát hành**.
 
 ---
 
-# Dell Precision 7560 — Control Deck v4.6.1
+
+## Lịch sử triển khai: Control Deck v4.6.1
 
 Trang điều khiển HTTPS: https://tunglam0605.github.io/dell7560-wol-remote/
 
