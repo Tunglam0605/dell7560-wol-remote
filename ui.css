@@ -386,3 +386,49 @@ html[data-theme=light] #buzzerTime{color-scheme:light}
 .alarm-item.alarm-muted{opacity:.78}
 @media(max-width:780px){.alarm-fields{grid-template-columns:1fr 1fr}.alarm-fields label:last-child{grid-column:span 2}}
 @media(max-width:520px){.alarm-fields{grid-template-columns:1fr}.alarm-fields label:last-child{grid-column:auto}.alarm-item{align-items:flex-start;flex-direction:column}.alarm-item-actions{width:100%;justify-content:flex-start}.alarm-editor-actions .btn{max-width:none}}
+
+/* v4.8: independently routed workspace views, no duplicate website or MQTT owner. */
+.tab-header{margin:28px 0 18px;padding:0 2px}
+.tab-header .eyebrow{letter-spacing:.15em}
+.tab-header h1{font-size:clamp(25px,2.7vw,36px);line-height:1.18;letter-spacing:-.035em;margin:7px 0 6px}
+.tab-header p{font-size:13px;max-width:650px}
+[data-view][hidden],.mobile-more-menu[hidden]{display:none!important}
+.content .main-grid{grid-template-columns:minmax(0,1fr);gap:0}
+.content .main-grid>.panel{width:100%}
+.content>.events-panel{margin-top:0}
+.content>.buzzer-panel{margin-bottom:0}
+.dashboard-shortcuts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:0 0 21px}
+.shortcut-card{position:relative;display:flex;flex-direction:column;gap:5px;min-width:0;padding:17px 15px;background:var(--surface);border:1px solid var(--border-soft);border-radius:16px;transition:transform .2s,border-color .2s,box-shadow .2s}
+.shortcut-card:hover,.shortcut-card:focus-visible{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 8px 28px rgba(16,185,129,.13);outline:none}
+.shortcut-icon{font-size:27px;line-height:1.3;color:var(--cyan);margin-bottom:7px}
+.shortcut-card strong{font-size:13px;line-height:1.3}
+.shortcut-card small{font-size:11px;line-height:1.4;color:var(--muted);padding-right:8px}
+.shortcut-arrow{position:absolute;right:13px;top:13px;color:var(--accent);font-size:15px}
+.alarm-editor-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:17px 0 6px}
+.alarm-editor-bar .btn{min-width:215px}
+.alarm-editor-bar p{font-size:11px;max-width:440px}
+.buzzer-preview-label{display:flex;flex-direction:column;gap:7px;font-size:12px;font-weight:700;color:var(--muted);grid-column:1/-1}
+.buzzer-preview-label select{min-height:44px;background:var(--surface-soft);border-color:var(--border-soft)}
+.dock-item:focus-visible,.nav-item:focus-visible,.mobile-more-link:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mobile-more-menu{position:absolute;bottom:calc(100% + 9px);right:0;width:min(260px,calc(100vw - 24px));border:1px solid var(--border);border-radius:15px;padding:8px;background:var(--surface);box-shadow:0 18px 45px rgba(0,4,12,.46);display:flex;flex-direction:column;gap:4px}
+.mobile-more-link{display:flex;align-items:center;gap:12px;padding:13px 12px;border-radius:10px;color:var(--text);font-weight:700}
+.mobile-more-link:hover,.mobile-more-link.active{color:var(--accent);background:var(--surface-soft)}
+.dock-more{font:inherit;background:none;border:0;cursor:pointer}
+.dock-more.active{background:rgba(52,211,153,.14);color:var(--accent)}
+@media(max-width:1440px){.dashboard-shortcuts{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:950px){.dashboard-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+ .tab-header{margin:19px 0 15px}
+ .tab-header h1{font-size:clamp(22px,6vw,28px)}
+ .tab-header p{font-size:12px}
+ .dashboard-shortcuts{gap:9px;margin-bottom:13px}
+ .shortcut-card{padding:14px 12px;border-radius:13px;min-height:122px}
+ .shortcut-icon{font-size:23px;margin-bottom:5px}
+ .shortcut-card strong{font-size:12px}
+ .shortcut-card small{font-size:10px}
+ .alarm-editor-bar{align-items:stretch;flex-direction:column}
+ .alarm-editor-bar .btn{width:100%;min-width:0}
+ .mobile-dock{grid-template-columns:repeat(5,minmax(0,1fr));overflow:visible}
+ .dock-more{width:100%}
+}
+@media(max-width:360px){.shortcut-card{padding:12px 9px}.shortcut-card small{font-size:9px}}
