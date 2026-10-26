@@ -7,14 +7,14 @@
   <meta name="description" content="Tùng Lâm Automation · Dell Precision 7560 remote power control">
   <title>Dell Remote Power | Tùng Lâm Automation</title>
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo.png">
-  <link rel="stylesheet" href="./ui.css?v=18">
+  <link rel="stylesheet" href="./ui.css?v=19">
 </head>
 <body>
 <div class="app-shell">
   <aside class="sidebar" aria-label="Điều hướng">
     <div class="brand-lockup">
       <img class="brand-logo" src="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo-background.png" alt="Tùng Lâm Automation">
-      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v4.7 RC</span></div>
+      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v4.8 UI</span></div>
     </div>
     <div class="nav-label">HỆ THỐNG</div>
     <nav class="nav-links" aria-label="Các khu vực">
@@ -37,7 +37,7 @@
 
   <main class="content" id="dashboard">
     <header class="topbar">
-      <div class="breadcrumb"><span>TUNGLAM AUTOMATION</span><span class="slash">/</span><b>REMOTE CONTROL</b></div>
+      <div class="breadcrumb"><span>TUNGLAM AUTOMATION</span><span class="slash">/</span><b id="routeLabel">TỔNG QUAN</b></div>
       <div class="topbar-actions">
         <span class="pill" id="cloudPill"><i class="led"></i><span id="cloudTop">Cloud chưa kết nối</span></span>
         <button class="icon-button" id="reconnect" type="button" title="Kết nối lại MQTT" aria-label="Kết nối lại MQTT">⟳</button>
@@ -45,8 +45,12 @@
         <button class="icon-button mobile-theme" id="themeMobile" type="button" title="Đổi giao diện">◐</button>
       </div>
     </header>
-
-    <section class="hero">
+    <div class="tab-header" id="tabHeader" hidden>
+      <div class="eyebrow" id="tabKicker">CONTROL DECK / WORKSPACE</div>
+      <h1 id="tabTitle" tabindex="-1">Trang điều khiển</h1>
+      <p id="tabDescription">Chọn chức năng từ thanh điều hướng.</p>
+    </div>
+    <section class="hero" data-view="dashboard">
       <div>
         <div class="eyebrow">◈ SECURE REMOTE POWER MANAGEMENT</div>
         <h1>Điều khiển <span class="gradient-text">Dell Precision 7560</span></h1>
@@ -55,12 +59,12 @@
       <div class="hero-device" aria-hidden="true"><div class="hero-ring"><span>⏻</span></div><small>PRECISION / 7560</small></div>
     </section>
 
-    <section class="device-overview" id="overview" aria-label="Trạng thái Dell">
+    <section class="device-overview" data-view="dashboard" id="overview" aria-label="Trạng thái Dell">
   <div class="device-emblem" aria-hidden="true"><svg viewBox="0 0 72 72" fill="none"><rect x="9" y="14" width="54" height="37" rx="5" stroke="currentColor" stroke-width="2.6"/><path d="M6 58h60M26 58l3-7h14l3 7M31 31l4 4 8-10" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="emblem-led" id="deviceLight"></span></div>
   <div class="device-overview-copy"><div class="device-overview-eyebrow">PRECISION 7560 <span class="overview-separator">/</span> DEVICE MONITOR</div><div class="device-overview-title" id="deviceHeadline">Đang xác minh trạng thái Dell</div><p id="deviceSummary">Kết nối Cloud để theo dõi và điều khiển thiết bị từ xa.</p><div class="device-freshness"><span id="lastSync">Chưa nhận dữ liệu trạng thái</span><span class="overview-tag" id="deviceBadge">CHƯA KẾT NỐI</span></div></div>
   <div class="device-overview-actions"><button type="button" class="overview-button overview-primary" id="pingAgent" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 12a8 8 0 0 1 14-5l2 2M20 4v5h-5M20 12a8 8 0 0 1-14 5l-2-2M4 20v-5h5"/></svg> Kiểm tra Dell</button><a class="overview-button overview-secondary" href="#power">Điều khiển nguồn <span aria-hidden="true">↗</span></a></div>
 </section>
-<section class="metrics" aria-label="Trạng thái hệ thống">
+<section class="metrics" data-view="dashboard" aria-label="Trạng thái hệ thống">
       <article class="stat-card"><div class="metric-top"><span>MQTT CLOUD</span><span class="metric-icon cyan">☁</span></div><strong id="cloudState">OFFLINE</strong><div class="metric-sub"><i id="cloudDot" class="led"></i><span>Kết nối WebSocket TLS</span></div></article>
       <article class="stat-card"><div class="metric-top"><span>ESP32 GATEWAY</span><span class="metric-icon mint">▣</span></div><strong id="espState">CHƯA RÕ</strong><div class="metric-sub"><i id="espDot" class="led"></i><span>Magic Packet / WOL</span></div></article>
       <article class="stat-card"><div class="metric-top"><span>WINDOWS AGENT</span><span class="metric-icon blue">▤</span></div><strong id="pcState">CHƯA RÕ</strong><div class="metric-sub"><i id="pcDot" class="led"></i><span>Nhận lệnh &amp; hẹn giờ</span></div></article>
@@ -68,7 +72,15 @@
     </section>
 
     
-<section class="panel buzzer-panel" id="buzzer" aria-label="Còi và báo thức ESP32">
+<nav class="dashboard-shortcuts" data-view="dashboard" aria-label="Đi tới chức năng">
+      <a href="#power" class="shortcut-card"><span class="shortcut-icon">⚡</span><strong>Điều khiển nguồn</strong><small>Bật và tắt Dell</small><span class="shortcut-arrow" aria-hidden="true">↗</span></a>
+      <a href="#schedule" class="shortcut-card"><span class="shortcut-icon">◷</span><strong>Hẹn giờ tắt máy</strong><small>Lập lịch và hủy lệnh</small><span class="shortcut-arrow" aria-hidden="true">↗</span></a>
+      <a href="#buzzer" class="shortcut-card"><span class="shortcut-icon">♫</span><strong>Đồng hồ báo thức</strong><small>8 lịch và 4 giai điệu</small><span class="shortcut-arrow" aria-hidden="true">↗</span></a>
+      <a href="#monitor" class="shortcut-card"><span class="shortcut-icon">◫</span><strong>Giám sát Dell</strong><small>CPU, RAM, pin và mạng</small><span class="shortcut-arrow" aria-hidden="true">↗</span></a>
+      <a href="#events" class="shortcut-card"><span class="shortcut-icon">▤</span><strong>Nhật ký</strong><small>Lịch sử điều khiển</small><span class="shortcut-arrow" aria-hidden="true">↗</span></a>
+    </nav>
+
+<section class="panel buzzer-panel" data-view="buzzer" hidden id="buzzer" aria-label="Còi và báo thức ESP32">
   <div class="panel-heading">
     <div><div class="eyebrow">ESP32 / GPIO4 · MULTI-ALARM v4.7</div><h2>🔔 Đồng hồ báo thức</h2>
     <p>Tối đa 8 lịch độc lập, lặp theo ngày và chọn giai điệu. ESP32 tự vận hành ngay cả khi Dell tắt hoặc điện thoại đóng trình duyệt.</p></div>
@@ -79,7 +91,11 @@
     <div><span>BÁO THỨC ĐANG BẬT</span><strong id="buzzerAlarmTime">--</strong></div>
     <div><span>ĐỒNG BỘ GIỜ</span><strong id="buzzerClockSync">Đang chờ</strong></div>
   </div>
-  <div class="alarm-editor">
+  <div class="alarm-editor-bar">
+    <button id="alarmEditorToggle" type="button" class="btn btn-primary" aria-expanded="false" aria-controls="alarmEditor">＋ Thêm báo thức mới</button>
+    <p>Nhấn Sửa trên lịch có sẵn để chỉnh giờ, ngày lặp và âm báo.</p>
+  </div>
+  <div class="alarm-editor" id="alarmEditor" hidden>
     <h3 id="alarmEditorTitle">Thêm báo thức mới</h3>
     <div class="alarm-fields">
       <label>Giờ báo thức (Việt Nam, UTC+7)
@@ -121,6 +137,12 @@
   <div class="alarm-list-head"><h3>Danh sách báo thức</h3><small id="alarmSlotsLeft">Đang chờ đồng bộ</small></div>
   <div id="buzzerAlarmList" class="alarm-list" aria-live="polite"><p class="hint">Đang chờ trạng thái từ ESP32...</p></div>
   <div class="buzzer-quick-actions">
+    <label class="buzzer-preview-label" for="buzzerPreviewMelody">Nghe thử âm báo
+      <select id="buzzerPreviewMelody">
+        <option value="0">Bíp tiêu chuẩn</option><option value="1">Giai điệu tăng dần</option>
+        <option value="2">Giai điệu nhẹ nhàng</option><option value="3">Chuông bốn nốt</option>
+      </select>
+    </label>
     <button id="buzzerTest" type="button" class="btn btn-outline" disabled>♪ Thử giai điệu đã chọn</button>
     <button id="buzzerStop" type="button" class="btn btn-outline" disabled>■ Dừng còi đang phát</button>
     <button id="buzzerRefresh" type="button" class="btn btn-ghost" disabled>⟳ Đồng bộ trạng thái</button>
@@ -128,7 +150,7 @@
   <p id="buzzerHelp" class="hint">Lịch lưu vào NVS của ESP32; mỗi lần báo tối đa 45 giây. GPIO4 dùng PWM cho còi thụ động, không phát MP3 hoặc giọng nói. Không dùng để cảnh báo an toàn.</p>
   <p id="buzzerFeedback" role="status" aria-live="polite" class="buzzer-feedback">Chờ firmware v4.7 và EMQX MQTT/TLS.</p>
 </section>
-<section class="monitor-panel" id="monitor" aria-label="Giám sát Dell thời gian thực">
+<section class="monitor-panel" data-view="monitor" hidden id="monitor" aria-label="Giám sát Dell thời gian thực">
   <div class="monitor-head"><div><div class="eyebrow">LIVE TELEMETRY / WINDOWS AGENT</div><h2>Giám sát hệ thống</h2><p>Chỉ số tổng hợp do Dell gửi qua kết nối MQTT/TLS.</p></div>
   <div class="monitor-caption"><span class="monitor-live-badge" id="monitorBadge">CHỜ DỮ LIỆU</span><span id="monitorUpdated">Chưa nhận thông số</span></div></div>
   <div class="monitor-grid">
@@ -141,7 +163,7 @@
   <p class="monitor-note">Không truyền tên tài khoản, tiến trình, IP hoặc MAC. Thông số sẽ tự ẩn khi máy offline hoặc mất cập nhật.</p>
 </section>
 <div class="main-grid">
-      <section id="power" class="panel power-panel">
+      <section id="power" data-view="power" hidden class="panel power-panel">
         <div class="panel-heading"><div><div class="eyebrow">POWER MANAGEMENT</div><h2>Điều khiển nguồn</h2><p>Lệnh được gửi qua EMQX và xác nhận bởi thiết bị đích.</p></div><span class="section-icon">⚡</span></div>
         <div class="power-actions">
           <div class="action-tile action-start"><div class="tile-badge mint">WOL · ESP32</div><div class="tile-icon">⏻</div><h3>Bật Dell từ xa</h3><p>Dành cho trạng thái Shutdown S5. ESP32 phát Magic Packet qua LAN.</p><button id="wake" class="btn btn-primary" type="button" disabled>⏻ &nbsp; Đánh thức Dell <span>→</span></button></div>
@@ -150,7 +172,7 @@
         <div class="cancel-strip" id="cancelStrip" hidden><span><i class="led warn"></i><b>Đang chờ tắt máy</b> — có thể hủy trước khi hết hạn</span><button type="button" class="btn btn-outline btn-sm" id="cancel" disabled>Hủy lệnh tắt ↩</button></div>
       </section>
 
-      <section id="schedule" class="panel schedule-panel">
+      <section id="schedule" data-view="schedule" hidden class="panel schedule-panel">
         <div class="panel-heading"><div><div class="eyebrow">AUTOMATION / TIMER</div><h2>Hẹn giờ tắt máy</h2><p>Lịch chạy tại Windows, không phụ thuộc điện thoại.</p></div><span class="section-icon">◷</span></div>
         <div class="timer-display"><small id="timerDisplayLabel">TRẠNG THÁI LỊCH TẮT</small><strong id="countdown">-- : -- : --</strong><span id="scheduleWhen">Chưa có lịch tắt máy</span></div>
         <div class="field-group"><label for="delayPreset">Tắt sau khoảng thời gian</label><div class="preset-grid">
@@ -168,13 +190,23 @@
       </section>
     </div>
 
-    <section class="panel events-panel" id="events"><div class="panel-heading"><div><div class="eyebrow">EVENT TELEMETRY</div><h2>Nhật ký điều khiển</h2></div><div class="events-actions"><button type="button" class="btn btn-outline btn-sm" id="copyLog">Sao chép</button><button type="button" class="btn btn-outline btn-sm" id="clearLog">Xóa nhật ký</button></div></div>
+    <section class="panel events-panel" data-view="events" hidden id="events"><div class="panel-heading"><div><div class="eyebrow">EVENT TELEMETRY</div><h2>Nhật ký điều khiển</h2></div><div class="events-actions"><button type="button" class="btn btn-outline btn-sm" id="copyLog">Sao chép</button><button type="button" class="btn btn-outline btn-sm" id="clearLog">Xóa nhật ký</button></div></div>
       <div id="log" class="log-console" role="log" aria-live="polite"><div class="log-entry"><time>--:--:--</time><span class="log-info">[SYSTEM]</span>Đang chờ kết nối EMQX Cloud...</div></div>
       <div id="message" class="sr-status" aria-live="polite"></div>
     </section>
     <footer class="footer"><span><i class="led ok"></i> TUNG LAM AUTOMATION · ENGINEERED FOR RELIABILITY</span><span>MQTT/TLS 8883 &nbsp; / &nbsp; WSS 8084 &nbsp; / &nbsp; ESP32 WOL</span></footer>
   </main>
-<nav class="mobile-dock" aria-label="Điều hướng nhanh"><a href="#dashboard" class="dock-item active" aria-label="Tổng quan"><span aria-hidden="true">⌂</span><small>Tổng quan</small></a><a href="#monitor" class="dock-item" aria-label="Giám sát hệ thống"><span aria-hidden="true">◫</span><small>Giám sát</small></a><a href="#power" class="dock-item" aria-label="Điều khiển nguồn"><span aria-hidden="true">⏻</span><small>Điều khiển</small></a><a href="#schedule" class="dock-item" aria-label="Lịch tắt máy"><span aria-hidden="true">◷</span><small>Hẹn giờ</small></a><a href="#buzzer" class="dock-item" aria-label="Còi và báo thức"><span aria-hidden="true">♪</span><small>Còi</small></a></nav>
+<nav class="mobile-dock" aria-label="Điều hướng nhanh">
+  <a href="#dashboard" class="dock-item active" aria-label="Tổng quan"><span aria-hidden="true">⌂</span><small>Tổng quan</small></a>
+  <a href="#power" class="dock-item" aria-label="Điều khiển nguồn"><span aria-hidden="true">⏻</span><small>Nguồn</small></a>
+  <a href="#schedule" class="dock-item" aria-label="Hẹn giờ"><span aria-hidden="true">◷</span><small>Hẹn giờ</small></a>
+  <a href="#buzzer" class="dock-item" aria-label="Đồng hồ báo thức"><span aria-hidden="true">♫</span><small>Báo thức</small></a>
+  <div class="mobile-more-menu" id="mobileMoreMenu" hidden>
+    <a class="mobile-more-link" href="#monitor"><span aria-hidden="true">◫</span> Giám sát Dell</a>
+    <a class="mobile-more-link" href="#events"><span aria-hidden="true">▤</span> Nhật ký</a>
+  </div>
+  <button class="dock-item dock-more" id="mobileMoreButton" type="button" aria-controls="mobileMoreMenu" aria-expanded="false"><span aria-hidden="true">⋯</span><small>Thêm</small></button>
+</nav>
 </div>
 
 <dialog class="gw-modal" id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog" class="modal-body"><div class="modal-eyebrow">TUNGLAM · SECURITY CONFIRMATION</div><h2 id="confirmTitle">Xác nhận thao tác</h2><p id="confirmText"></p><div class="modal-actions"><button class="btn btn-outline" id="confirmNo" value="cancel">Hủy bỏ</button><button class="btn btn-danger" id="confirmYes" value="confirm">Xác nhận thực hiện</button></div></form></dialog>
@@ -193,5 +225,5 @@
 </div></dialog>
 <script src="./mqtt.min.js"></script>
 <script src="./icons.js?v=4"></script>
-<script src="./app.js?v=18"></script>
+<script src="./app.js?v=19"></script>
 </body></html>
