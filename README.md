@@ -1,3 +1,28 @@
+# Dell Precision 7560 — Control Deck v4.9 (Remote Screen Lock)
+
+**One official website:** https://tunglam0605.github.io/dell7560-wol-remote/
+
+This is an additive Windows Agent feature on the existing v4.8 multi-tab dashboard. No ESP32 firmware update is required.
+
+## Lock action (LOCK)
+
+- Control Deck > **Điều khiển nguồn** adds **Khóa màn hình Dell**, enabled only when the authenticated Windows Agent advertises `lock_v1`.
+- The browser publishes `LOCK|<expiry>|<nonce>` on the existing authenticated MQTT command topic. No passwords/PINs or user input are transmitted.
+- Windows Agent rejects retained, expired, malformed, future and replayed commands; it dispatches `DellRemoteLockScreen` scheduled task under the active user's **InteractiveToken**, not the Session-0 SYSTEM desktop.
+- The interactive task invokes the documented Windows `LockWorkStation()` API. ACK `lock_dispatched` means Task Scheduler accepted the request, **not** independent proof that the screen is locked.
+- Unlocking requires authentication through the user's existing remote-control application or the Windows sign-in screen. **No web-based Windows unlock, password storage, automatic sign-in or login bypass.**
+- Existing WOL, Windows shutdown/schedule/cancel, multi-alarm buzzer, telemetry, MQTT TLS and audit controls remain unchanged.
+
+## Verification and release gate
+
+- Windows 11 Pro build 26200 confirmed; agent task runs as SYSTEM, interactive console session is 1.
+- An on-demand InteractiveToken task was created and executed in **session 1** without changing the lock state.
+- Updated Windows Agent `--self-test` passed all 34 cases; frontend syntax and DOM continuity must pass before publishing.
+- Live lock is intentionally **not** triggered during remote deployment: the owner will press the web button for acceptance.
+- The agent must be restarted after updating its source to advertise `lock_v1`; until then the web lock button stays disabled.
+
+---
+
 # Dell Precision 7560 — Control Deck v4.8 (Multi-tab UI)
 
 **Website chính thức duy nhất:** https://tunglam0605.github.io/dell7560-wol-remote/
