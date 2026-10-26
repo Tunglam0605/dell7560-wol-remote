@@ -13,7 +13,7 @@ const SCHEDULE_MIN=120;
 const SCHEDULE_MAX=24*3600;
 const ACK_WAIT_MS=13000;
 let mqttClient=null,connected=false,espOnline=false,agentOnline=false;
-let timerSupported=false,shutdownDeadline=null,shutdownKind=null;
+let timerSupported=false,lockSupported=false,shutdownDeadline=null,shutdownKind=null;
 let pending=null,prefix='home/dell7560',delayMinutes=15;
 let eventCounter=0,lastStateAt=0,lastAgentHeartbeatAt=0;
 
@@ -310,6 +310,7 @@ function updateState(){
  $('wake').disabled=!(connected&&espOnline)||Boolean(pending);
  renderBuzzer();
  $('shutdown').disabled=!(connected&&agentOnline)||Boolean(pending)||Boolean(shutdownDeadline);
+ $('lockScreen').disabled=!(connected&&agentOnline&&lockSupported)||Boolean(pending);
  $('scheduleBtn').disabled=!(connected&&agentOnline&&timerSupported)||Boolean(pending)||Boolean(shutdownDeadline);
  $('cancel').disabled=!(connected&&agentOnline)||Boolean(pending);
  $('cancelSchedule').disabled=!(connected&&agentOnline)||Boolean(pending);
@@ -357,6 +358,7 @@ function applyPresence(packet){
  const wasDeadline=shutdownDeadline,wasKind=shutdownKind;
  agentOnline=packet.result==='power_agent_online';
  timerSupported=agentOnline&&(packet.capabilities?.includes?.('schedule_v2')===true);
+ lockSupported=agentOnline&&(packet.capabilities?.includes?.('lock_v1')===true);
  const target=packet.scheduled_for;
  if(agentOnline&&Number.isInteger(target)&&target>0){
    setScheduleDeadline(target,packet.scheduled_kind);
@@ -413,7 +415,7 @@ function connect(){
  let cfg;try{cfg=getInput()}catch(e){log('error',e.message);openSettings(!e.message.includes('mật khẩu'));return}
  if(typeof mqtt==='undefined'){log('error','Thiếu thư viện MQTT.js');return}
  saveConfig(cfg);if(mqttClient){try{mqttClient.end(true)}catch{}}
- connected=false;espOnline=false;agentOnline=false;timerSupported=false;
+ connected=false;espOnline=false;agentOnline=false;timerSupported=false;lockSupported=false;
  buzzerState=null;buzzerUpdated=0;renderBuzzer();
  pending=null;prefix=cfg.topic;updateState();
  log('info','Đang kết nối EMQX Cloud qua WSS/TLS...');
@@ -464,6 +466,11 @@ function connect(){
      log(success?'success':'warn',message);
      if(action==='ALARM_PUT'&&success)alarmClearEdit();
    }
+   else if(action==='LOCK'){
+     if(a.result==='lock_dispatched')
+       log('success','Windows đã nhận yêu cầu khóa màn hình. Mở lại qua công cụ điều khiển từ xa bằng xác thực Windows.');
+     else log('warn','Không gửi được yêu cầu khóa màn hình: '+String(a.result).slice(0,65));
+   }
    else if(action==='SHUTDOWN'||action==='SCHEDULE'){
      if(['shutdown_scheduled','timer_scheduled','shutdown_already_scheduled'].includes(a.result)){
        if(Number.isInteger(a.scheduled_for))setScheduleDeadline(a.scheduled_for,action==='SHUTDOWN'?'now':'timer');
@@ -479,8 +486,8 @@ function connect(){
    }
    updateState();
  });
- c.on('reconnect',()=>{if(c!==mqttClient)return;connected=false;espOnline=false;agentOnline=false;timerSupported=false;updateState();log('warn','Đang kết nối lại Cloud...');});
- c.on('close',()=>{if(c!==mqttClient)return;connected=false;espOnline=false;agentOnline=false;timerSupported=false;updateState();});
+ c.on('reconnect',()=>{if(c!==mqttClient)return;connected=false;espOnline=false;agentOnline=false;timerSupported=false;lockSupported=false;updateState();log('warn','Đang kết nối lại Cloud...');});
+ c.on('close',()=>{if(c!==mqttClient)return;connected=false;espOnline=false;agentOnline=false;timerSupported=false;lockSupported=false;updateState();});
  c.on('error',e=>{if(c===mqttClient)log('error','MQTT/TLS: '+String(e.code||e.message).slice(0,100))});
  $('settings').close();
 }
@@ -490,7 +497,8 @@ function command(action,target){
  if(['BEEP','ALARM_SET','ALARM_OFF','ALARM_STOP','ALARM_STATUS',
      'ALARM_PUT','ALARM_ENABLE','ALARM_DELETE','MELODY_TEST'].includes(action)
  &&(!espOnline||(action!=='ALARM_STATUS'&&!buzzerReady())))return false;
- if(['SHUTDOWN','CANCEL','SCHEDULE'].includes(action)&&!agentOnline)return false;
+ if(['SHUTDOWN','CANCEL','SCHEDULE','LOCK'].includes(action)&&!agentOnline)return false;
+ if(action==='LOCK'&&!lockSupported)return false;
  if(action==='SCHEDULE'&&!timerSupported)return false;
  const now=Math.floor(Date.now()/1000),expiry=now+30,id=randomHex();
  const extra=['SCHEDULE','ALARM_SET','ALARM_PUT','ALARM_ENABLE','ALARM_DELETE','MELODY_TEST'].includes(action)?'|'+target:'';
@@ -507,6 +515,9 @@ function ask(title,content,onYes){
  const dialog=$('confirmDialog');
  dialog.showModal();
  dialog.addEventListener('close',()=>{if(dialog.returnValue==='confirm')onYes()}, {once:true});
+}
+function lockScreenNow(){
+ ask('Khóa màn hình Dell?','Windows sẽ khóa phiên desktop hiện tại, không tắt máy hay ngắt Windows Agent. Để mở khóa, hãy dùng công cụ điều khiển từ xa và xác thực Windows thông thường.',()=>command('LOCK'));
 }
 function shutdownNow(){
  ask('Xác nhận tắt Dell','Windows sẽ bắt đầu tắt sau 45 giây. Hãy lưu tài liệu đang mở; có thể hủy lịch trước thời hạn.',()=>command('SHUTDOWN'));
@@ -554,6 +565,7 @@ function init(){
     catch(e){log('warn','Không sao chép tự động được; vui lòng chọn và sao chép nhật ký thủ công.')}
   });
   $('shutdown').addEventListener('click',shutdownNow);
+  $('lockScreen').addEventListener('click',lockScreenNow);
   $('scheduleBtn').addEventListener('click',schedulePower);
   $('cancel').addEventListener('click',cancelPower);
   $('cancelSchedule').addEventListener('click',cancelPower);
@@ -618,7 +630,7 @@ function init(){
   renderRoute();
   setInterval(()=>{
     if(agentOnline&&lastAgentHeartbeatAt&&Date.now()-lastAgentHeartbeatAt>75000){
-      agentOnline=false;timerSupported=false;lastAgentHeartbeatAt=0;
+      agentOnline=false;timerSupported=false;lockSupported=false;lastAgentHeartbeatAt=0;
       log('warn','Không nhận heartbeat Windows Agent trong 75 giây.');
       updateState();
     }

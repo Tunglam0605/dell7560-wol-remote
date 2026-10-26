@@ -7,14 +7,14 @@
   <meta name="description" content="Tùng Lâm Automation · Dell Precision 7560 remote power control">
   <title>Dell Remote Power | Tùng Lâm Automation</title>
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo.png">
-  <link rel="stylesheet" href="./ui.css?v=19">
+  <link rel="stylesheet" href="./ui.css?v=20">
 </head>
 <body>
 <div class="app-shell">
   <aside class="sidebar" aria-label="Điều hướng">
     <div class="brand-lockup">
       <img class="brand-logo" src="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo-background.png" alt="Tùng Lâm Automation">
-      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v4.8 UI</span></div>
+      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v4.9 UI</span></div>
     </div>
     <div class="nav-label">HỆ THỐNG</div>
     <nav class="nav-links" aria-label="Các khu vực">
@@ -169,6 +169,13 @@
           <div class="action-tile action-start"><div class="tile-badge mint">WOL · ESP32</div><div class="tile-icon">⏻</div><h3>Bật Dell từ xa</h3><p>Dành cho trạng thái Shutdown S5. ESP32 phát Magic Packet qua LAN.</p><button id="wake" class="btn btn-primary" type="button" disabled>⏻ &nbsp; Đánh thức Dell <span>→</span></button></div>
           <div class="action-tile action-stop"><div class="tile-badge coral">WINDOWS · POWER</div><div class="tile-icon">⏼</div><h3>Tắt Dell an toàn</h3><p>Xác nhận trước khi thực hiện. Có 45 giây để hủy lệnh.</p><button id="shutdown" class="btn btn-danger" type="button" disabled>⏼ &nbsp; Tắt máy từ xa <span>→</span></button></div>
         </div>
+        <div class="action-tile action-lock">
+          <div class="tile-badge mint">WINDOWS · SESSION</div>
+          <div class="tile-icon" aria-hidden="true">🔒</div>
+          <h3>Khóa màn hình Dell</h3>
+          <p>Khóa phiên Windows đang đăng nhập mà không tắt máy. Mở lại bằng công cụ điều khiển từ xa và xác thực Windows của bạn.</p>
+          <button id="lockScreen" class="btn btn-outline" type="button" disabled>🔒 &nbsp; Khóa màn hình <span aria-hidden="true">→</span></button>
+        </div>
         <div class="cancel-strip" id="cancelStrip" hidden><span><i class="led warn"></i><b>Đang chờ tắt máy</b> — có thể hủy trước khi hết hạn</span><button type="button" class="btn btn-outline btn-sm" id="cancel" disabled>Hủy lệnh tắt ↩</button></div>
       </section>
 
@@ -225,5 +232,5 @@
 </div></dialog>
 <script src="./mqtt.min.js"></script>
 <script src="./icons.js?v=4"></script>
-<script src="./app.js?v=19"></script>
+<script src="./app.js?v=20"></script>
 </body></html>
