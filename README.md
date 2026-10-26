@@ -18,7 +18,7 @@ This is an additive Windows Agent feature on the existing v4.8 multi-tab dashboa
 - Windows 11 Pro build 26200 confirmed; agent task runs as SYSTEM, interactive console session is 1.
 - An on-demand InteractiveToken task was created and executed in **session 1** without changing the lock state.
 - Updated Windows Agent `--self-test` passed all 34 cases; frontend syntax and DOM continuity must pass before publishing.
-- Live lock is intentionally **not** triggered during remote deployment: the owner will press the web button for acceptance.
+- During initial deployment no live lock was triggered. A subsequent MQTT LOCK request was **actually dispatched at 2026-10-26 14:17:50 ICT**: Task Scheduler reported `DellRemoteLockScreen` last result `0`, and the existing `LockScreenDisplayOffKeepAwake` session-lock trigger ran at 14:17:51 with result `0`. This corroborates real Windows locking; the sender of that MQTT request was not identified by this audit.
 - Windows Agent was restarted successfully at 2026-10-26 14:09 ICT; its log confirms `MQTT connected` and `MQTT commands subscription active` after restart. The web lock button requires `lock_v1` telemetry.
 
 ---
