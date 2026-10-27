@@ -98,7 +98,7 @@ function renderMonitor(){
 
 
 const BUZZER_STATUS_ID='BBBBBBBBBBBBBBBB';
-const MELODY_LABELS=['Bíp tiêu chuẩn','Giai điệu tăng dần','Giai điệu nhẹ nhàng','Chuông bốn nốt'];
+const MELODY_LABELS=['Bíp ngắn','Ba tiếng bíp nhanh','Hai tiếng bíp dài','Bốn tiếng bíp'];
 const DAY_NAMES=['T2','T3','T4','T5','T6','T7','CN'];
 let buzzerState=null,buzzerUpdated=0,alarmEditingSlot=null;
 function buzzerReady(){return connected&&espOnline&&buzzerState?.version===2&&Date.now()-buzzerUpdated<50000}
@@ -456,7 +456,7 @@ function connect(){
             'ALARM_PUT','ALARM_ENABLE','ALARM_DELETE','MELODY_TEST'].includes(action)){
      const success=['beep_queued','melody_queued','alarm_saved','alarm_deleted',
                     'alarm_disabled','alarm_stopped','alarm_status_ok'].includes(a.result);
-     const messages={beep_queued:'ESP32 đã xếp lệnh bíp',melody_queued:'Đã xếp phát thử giai điệu',
+     const messages={beep_queued:'ESP32 đã xếp lệnh bíp',melody_queued:'Đã gửi lệnh thử nhịp còi D4',
       alarm_saved:'ESP32 đã lưu báo thức',alarm_deleted:'ESP32 đã xóa báo thức',
       alarm_disabled:'ESP32 đã tắt lịch báo thức',alarm_stopped:'Đã gửi lệnh dừng còi',
       alarm_status_ok:'Đã yêu cầu đồng bộ trạng thái còi'};
