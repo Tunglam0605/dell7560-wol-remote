@@ -14,7 +14,7 @@
   <aside class="sidebar" aria-label="Điều hướng">
     <div class="brand-lockup">
       <img class="brand-logo" src="https://raw.githubusercontent.com/Tunglam0605/remote-workstation-mcp/main/assets/brand/logo-background.png" alt="Tùng Lâm Automation">
-      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v4.9 UI</span></div>
+      <div class="brand-caption">REMOTE POWER CONSOLE <span class="version">v4.9.1 UI</span></div>
     </div>
     <div class="nav-label">HỆ THỐNG</div>
     <nav class="nav-links" aria-label="Các khu vực">
@@ -75,7 +75,7 @@
 <nav class="dashboard-shortcuts" data-view="dashboard" aria-label="Đi tới chức năng">
       <a href="#power" class="shortcut-card"><span class="shortcut-icon">⚡</span><strong>Điều khiển nguồn</strong><small>Bật và tắt Dell</small><span class="shortcut-arrow" aria-hidden="true">↗</span></a>
       <a href="#schedule" class="shortcut-card"><span class="shortcut-icon">◷</span><strong>Hẹn giờ tắt máy</strong><small>Lập lịch và hủy lệnh</small><span class="shortcut-arrow" aria-hidden="true">↗</span></a>
-      <a href="#buzzer" class="shortcut-card"><span class="shortcut-icon">♫</span><strong>Đồng hồ báo thức</strong><small>8 lịch và 4 giai điệu</small><span class="shortcut-arrow" aria-hidden="true">↗</span></a>
+      <a href="#buzzer" class="shortcut-card"><span class="shortcut-icon">♫</span><strong>Đồng hồ báo thức</strong><small>8 lịch và 4 nhịp bíp</small><span class="shortcut-arrow" aria-hidden="true">↗</span></a>
       <a href="#monitor" class="shortcut-card"><span class="shortcut-icon">◫</span><strong>Giám sát Dell</strong><small>CPU, RAM, pin và mạng</small><span class="shortcut-arrow" aria-hidden="true">↗</span></a>
       <a href="#events" class="shortcut-card"><span class="shortcut-icon">▤</span><strong>Nhật ký</strong><small>Lịch sử điều khiển</small><span class="shortcut-arrow" aria-hidden="true">↗</span></a>
     </nav>
@@ -83,7 +83,7 @@
 <section class="panel buzzer-panel" data-view="buzzer" hidden id="buzzer" aria-label="Còi và báo thức ESP32">
   <div class="panel-heading">
     <div><div class="eyebrow">ESP32 / GPIO4 · MULTI-ALARM v4.7</div><h2>🔔 Đồng hồ báo thức</h2>
-    <p>Tối đa 8 lịch độc lập, lặp theo ngày và chọn giai điệu. ESP32 tự vận hành ngay cả khi Dell tắt hoặc điện thoại đóng trình duyệt.</p></div>
+    <p>Tối đa 8 lịch độc lập, lặp theo ngày và chọn nhịp còi D4. ESP32 tự vận hành ngay cả khi Dell tắt hoặc điện thoại đóng trình duyệt.</p></div>
     <span class="buzzer-ready" id="buzzerCloudState">CHỜ THIẾT BỊ</span>
   </div>
   <div class="buzzer-overview">
@@ -113,9 +113,9 @@
       <label>Âm báo thức
         <select id="buzzerMelody">
           <option value="0">Bíp tiêu chuẩn</option>
-          <option value="1">Giai điệu tăng dần</option>
-          <option value="2">Giai điệu nhẹ nhàng</option>
-          <option value="3">Chuông bốn nốt</option>
+          <option value="1">Ba tiếng bíp tăng nhịp</option>
+          <option value="2">Hai tiếng bíp dài</option>
+          <option value="3">Bốn tiếng bíp</option>
         </select>
       </label>
     </div>
@@ -137,13 +137,13 @@
   <div class="alarm-list-head"><h3>Danh sách báo thức</h3><small id="alarmSlotsLeft">Đang chờ đồng bộ</small></div>
   <div id="buzzerAlarmList" class="alarm-list" aria-live="polite"><p class="hint">Đang chờ trạng thái từ ESP32...</p></div>
   <div class="buzzer-quick-actions">
-    <label class="buzzer-preview-label" for="buzzerPreviewMelody">Nghe thử âm báo
+    <label class="buzzer-preview-label" for="buzzerPreviewMelody">Thử nhịp còi D4
       <select id="buzzerPreviewMelody">
-        <option value="0">Bíp tiêu chuẩn</option><option value="1">Giai điệu tăng dần</option>
-        <option value="2">Giai điệu nhẹ nhàng</option><option value="3">Chuông bốn nốt</option>
+        <option value="0">Bíp tiêu chuẩn</option><option value="1">Ba tiếng bíp tăng nhịp</option>
+        <option value="2">Hai tiếng bíp dài</option><option value="3">Bốn tiếng bíp</option>
       </select>
     </label>
-    <button id="buzzerTest" type="button" class="btn btn-outline" disabled>♪ Thử giai điệu đã chọn</button>
+    <button id="buzzerTest" type="button" class="btn btn-outline" disabled>♪ Thử nhịp còi đã chọn</button>
     <button id="buzzerStop" type="button" class="btn btn-outline" disabled>■ Dừng còi đang phát</button>
     <button id="buzzerRefresh" type="button" class="btn btn-ghost" disabled>⟳ Đồng bộ trạng thái</button>
   </div>
@@ -232,5 +232,5 @@
 </div></dialog>
 <script src="./mqtt.min.js"></script>
 <script src="./icons.js?v=4"></script>
-<script src="./app.js?v=20"></script>
+<script src="./app.js?v=21"></script>
 </body></html>
